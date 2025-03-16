@@ -14,14 +14,26 @@ class ProductController
         $this->productModel = new ProductModel($this->db);
     }
 
-    // Các hàm hiện có của bạn giữ nguyên, tôi chỉ thêm/bổ sung phần giỏ hàng
+    public function filter() 
+{
+    $category_id = isset($_GET['category']) ? $_GET['category'] : null;
+    $min_price = isset($_GET['min_price']) ? $_GET['min_price'] : 0;
+    $max_price = isset($_GET['max_price']) ? $_GET['max_price'] : 10000000;
+    $rating = isset($_GET['rating']) ? $_GET['rating'] : null;
+    
+    $products = $this->productModel->getFilteredProducts($category_id, $min_price, $max_price, $rating);
+    $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : [];
+    
+    include 'app/views/product/list.php';
+}
+
     public function index() 
     {
         $products = $this->productModel->getProducts();
+        $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : []; // Lấy danh sách ID sản phẩm trong giỏ hàng
         include 'app/views/product/list.php';
     }
 
-    // Hàm thêm sản phẩm vào giỏ hàng
     public function addToCart($id) 
     {
         $product = $this->productModel->getProductById($id);
@@ -35,7 +47,7 @@ class ProductController
         }
 
         if (isset($_SESSION['cart'][$id])) {
-            $_SESSION['cart'][$id]['quantity'] += 1; // Tăng số lượng nếu đã có
+            $_SESSION['cart'][$id]['quantity'] += 1;
         } else {
             $_SESSION['cart'][$id] = [
                 'name' => $product->name,
@@ -46,10 +58,9 @@ class ProductController
             ];
         }
 
-        header('Location: /Product'); // Quay lại danh sách sản phẩm
+        header('Location: /Product');
     }
 
-    // Hàm hiển thị giỏ hàng
     public function cart() 
     {
         $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
@@ -57,25 +68,61 @@ class ProductController
         include 'app/views/product/cart.php';
     }
 
-    // Hàm cập nhật số lượng sản phẩm trong giỏ
     public function updateCart() 
     {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $productId = $_POST['product_id'];
-            $quantity = (int)$_POST['quantity'];
+            if (isset($_POST['quantity'])) {
+                foreach ($_POST['quantity'] as $productId => $quantity) {
+                    $productId = (int)$productId;
+                    $quantity = (int)$quantity;
 
-            if (isset($_SESSION['cart'][$productId])) {
-                if ($quantity > 0) {
-                    $_SESSION['cart'][$productId]['quantity'] = $quantity;
-                } else {
-                    unset($_SESSION['cart'][$productId]); // Xóa nếu số lượng = 0
+                    if (isset($_SESSION['cart'][$productId])) {
+                        if ($quantity > 0) {
+                            $_SESSION['cart'][$productId]['quantity'] = $quantity;
+                        } else {
+                            unset($_SESSION['cart'][$productId]);
+                        }
+                    }
+                }
+            } else if (isset($_POST['product_id']) && isset($_POST['quantity'])) {
+                $productId = (int)$_POST['product_id'];
+                $quantity = (int)$_POST['quantity'];
+                
+                if (isset($_SESSION['cart'][$productId])) {
+                    if ($quantity > 0) {
+                        $_SESSION['cart'][$productId]['quantity'] = $quantity;
+                        $subtotal = $quantity * $_SESSION['cart'][$productId]['price'];
+                        $total = $this->calculateCartTotal($_SESSION['cart']);
+                        
+                        echo json_encode([
+                            'success' => true,
+                            'subtotal' => $subtotal,
+                            'total' => $total,
+                            'formattedSubtotal' => number_format($subtotal, 0, ',', '.') . ' ₫',
+                            'formattedTotal' => number_format($total, 0, ',', '.') . ' ₫'
+                        ]);
+                        exit;
+                    } else {
+                        unset($_SESSION['cart'][$productId]);
+                        $total = $this->calculateCartTotal($_SESSION['cart']);
+                        echo json_encode([
+                            'success' => true,
+                            'removed' => true,
+                            'total' => $total,
+                            'formattedTotal' => number_format($total, 0, ',', '.') . ' ₫'
+                        ]);
+                        exit;
+                    }
                 }
             }
-            header('Location: /Product/cart');
+            
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] != 'XMLHttpRequest') {
+                header('Location: /Product/cart');
+                exit;
+            }
         }
     }
 
-    // Hàm xóa sản phẩm khỏi giỏ
     public function removeFromCart($id) 
     {
         if (isset($_SESSION['cart'][$id])) {
@@ -84,7 +131,6 @@ class ProductController
         header('Location: /Product/cart');
     }
 
-    // Hàm tính tổng giá trị giỏ hàng
     private function calculateCartTotal($cart) 
     {
         $total = 0;
@@ -97,7 +143,6 @@ class ProductController
     public function show($id) 
     { 
         $product = $this->productModel->getProductById($id); 
- 
         if ($product) { 
             include 'app/views/product/show.php'; 
         } else { 
@@ -125,8 +170,7 @@ class ProductController
                 $image = ""; 
             } 
            
-            $result = $this->productModel->addProduct($name, $description, $price, 
-$category_id, $image); 
+            $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image); 
  
             if (is_array($result)) { 
                 $errors = $result; 
@@ -165,8 +209,7 @@ $category_id, $image);
                 $image = $_POST['existing_image']; 
             } 
  
-            $edit = $this->productModel->updateProduct($id, $name, $description, 
-$price, $category_id, $image); 
+            $edit = $this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image); 
  
             if ($edit) { 
                 header('Location: /Product'); 
@@ -178,18 +221,28 @@ $price, $category_id, $image);
  
     public function delete($id) 
     { 
+        // Kiểm tra xem sản phẩm có trong giỏ hàng không
+        $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : [];
+        if (in_array($id, $cartItems)) {
+            // Nếu sản phẩm trong giỏ hàng, hiển thị thông báo lỗi và không xóa
+            $_SESSION['error'] = "Không thể xóa sản phẩm này vì nó đang trong giỏ hàng!";
+            header('Location: /Product');
+            exit;
+        }
+
+        // Nếu không trong giỏ hàng, tiến hành xóa
         if ($this->productModel->deleteProduct($id)) {
-            header('Location: /Product'); 
-        } else { 
-            echo "Đã xảy ra lỗi khi xóa sản phẩm."; 
-        } 
+            $_SESSION['success'] = "Sản phẩm đã được xóa thành công!";
+            header('Location: /Product');
+        } else {
+            $_SESSION['error'] = "Đã xảy ra lỗi khi xóa sản phẩm.";
+            header('Location: /Product');
+        }
     } 
  
     private function uploadImage($file) 
     { 
         $target_dir = "uploads/"; 
-         
-        // Kiểm tra và tạo thư mục nếu chưa tồn tại 
         if (!is_dir($target_dir)) { 
             mkdir($target_dir, 0777, true); 
         } 
@@ -197,32 +250,25 @@ $price, $category_id, $image);
         $target_file = $target_dir . basename($file["name"]); 
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION)); 
      
-        // Kiểm tra xem file có phải là hình ảnh không 
         $check = getimagesize($file["tmp_name"]); 
         if ($check === false) { 
             throw new Exception("File không phải là hình ảnh."); 
         } 
      
-         // Kiểm tra kích thước file (10 MB = 10 * 1024 * 1024 bytes) 
         if ($file["size"] > 10 * 1024 * 1024) { 
-        throw new Exception("Hình ảnh có kích thước quá lớn."); 
+            throw new Exception("Hình ảnh có kích thước quá lớn."); 
         } 
      
-        // Chỉ cho phép một số định dạng hình ảnh nhất định 
-        if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != 
-"jpeg" && $imageFileType != "gif") { 
+        if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") { 
             throw new Exception("Chỉ cho phép các định dạng JPG, JPEG, PNG và GIF."); 
         } 
      
-        // Lưu file 
         if (!move_uploaded_file($file["tmp_name"], $target_file)) { 
             throw new Exception("Có lỗi xảy ra khi tải lên hình ảnh."); 
         } 
      
         return $target_file; 
     } 
-     
-     
  
     public function checkout() 
     { 
@@ -236,19 +282,15 @@ $price, $category_id, $image);
             $phone = $_POST['phone']; 
             $address = $_POST['address']; 
  
-            // Kiểm tra giỏ hàng 
             if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) { 
                 echo "Giỏ hàng trống."; 
                 return; 
             } 
  
-            // Bắt đầu giao dịch
             $this->db->beginTransaction(); 
  
             try { 
-                // Lưu thông tin đơn hàng vào bảng orders 
-                $query = "INSERT INTO orders (name, phone, address) VALUES (:name, 
-:phone, :address)"; 
+                $query = "INSERT INTO orders (name, phone, address) VALUES (:name, :phone, :address)"; 
                 $stmt = $this->db->prepare($query); 
                 $stmt->bindParam(':name', $name); 
                 $stmt->bindParam(':phone', $phone); 
@@ -256,11 +298,9 @@ $price, $category_id, $image);
                 $stmt->execute(); 
                 $order_id = $this->db->lastInsertId(); 
  
-                // Lưu chi tiết đơn hàng vào bảng order_details 
                 $cart = $_SESSION['cart']; 
                 foreach ($cart as $product_id => $item) { 
-                    $query = "INSERT INTO order_details (order_id, product_id, 
-quantity, price) VALUES (:order_id, :product_id, :quantity, :price)"; 
+                    $query = "INSERT INTO order_details (order_id, product_id, quantity, price) VALUES (:order_id, :product_id, :quantity, :price)"; 
                     $stmt = $this->db->prepare($query); 
                     $stmt->bindParam(':order_id', $order_id); 
                     $stmt->bindParam(':product_id', $product_id); 
@@ -269,16 +309,10 @@ quantity, price) VALUES (:order_id, :product_id, :quantity, :price)";
                     $stmt->execute(); 
                 } 
  
-                // Xóa giỏ hàng sau khi đặt hàng thành công 
                 unset($_SESSION['cart']); 
- 
-                // Commit giao dịch 
                 $this->db->commit(); 
- 
-                // Chuyển hướng đến trang xác nhận đơn hàng 
                 header('Location: /Product/orderConfirmation'); 
             } catch (Exception $e) { 
-                // Rollback giao dịch nếu có lỗi 
                 $this->db->rollBack(); 
                 echo "Đã xảy ra lỗi khi xử lý đơn hàng: " . $e->getMessage(); 
             } 
@@ -288,6 +322,44 @@ quantity, price) VALUES (:order_id, :product_id, :quantity, :price)";
     public function orderConfirmation() 
     { 
         include 'app/views/product/orderConfirmation.php'; 
-    } 
+    }
+    
+    public function ajaxUpdateCart() {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['product_id']) && isset($_POST['quantity'])) {
+            $productId = (int)$_POST['product_id'];
+            $quantity = (int)$_POST['quantity'];
+            
+            $result = ['success' => false];
+            
+            if (isset($_SESSION['cart'][$productId])) {
+                if ($quantity > 0) {
+                    $_SESSION['cart'][$productId]['quantity'] = $quantity;
+                    $subtotal = $quantity * $_SESSION['cart'][$productId]['price'];
+                    $total = $this->calculateCartTotal($_SESSION['cart']);
+                    
+                    $result = [
+                        'success' => true,
+                        'subtotal' => $subtotal,
+                        'total' => $total,
+                        'formattedSubtotal' => number_format($subtotal, 0, ',', '.') . ' ₫',
+                        'formattedTotal' => number_format($total, 0, ',', '.') . ' ₫'
+                    ];
+                } else {
+                    unset($_SESSION['cart'][$productId]);
+                    $total = $this->calculateCartTotal($_SESSION['cart']);
+                    $result = [
+                        'success' => true,
+                        'removed' => true,
+                        'total' => $total,
+                        'formattedTotal' => number_format($total, 0, ',', '.') . ' ₫'
+                    ];
+                }
+            }
+            
+            header('Content-Type: application/json');
+            echo json_encode($result);
+            exit;
+        }
+    }
 }
-?> 
+?>

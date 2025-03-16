@@ -273,7 +273,7 @@ body {
     </style>
 
     <?php if (!empty($cart)): ?>
-        <form method="POST" action="/Product/updateCart">
+        <form method="POST" action="/Product/updateCart" id="cartForm">
             <table class="table table-striped table-bordered">
                 <thead>
                     <tr>
@@ -287,7 +287,7 @@ body {
                 </thead>
                 <tbody>
                     <?php foreach ($cart as $id => $item): ?>
-                        <tr>
+                        <tr data-product-id="<?php echo $id; ?>">
                             <td>
                                 <?php if (!empty($item['image'])): ?>
                                     <img src="/<?php echo htmlspecialchars($item['image']); ?>" 
@@ -298,14 +298,21 @@ body {
                                 <?php endif; ?>
                             </td>
                             <td><?php echo htmlspecialchars($item['name']); ?></td>
-                            <td><?php echo number_format($item['price'], 0, ',', '.'); ?> ₫</td>
-                            <td>
-                                <input type="number" name="quantity[<?php echo $id; ?>]" 
-                                       value="<?php echo $item['quantity']; ?>" 
-                                       min="0" class="form-control" style="width: 80px;">
-                                <input type="hidden" name="product_id" value="<?php echo $id; ?>">
+                            <td class="price" data-price="<?php echo $item['price']; ?>">
+                                <?php echo number_format($item['price'], 0, ',', '.'); ?> ₫
                             </td>
-                            <td><?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?> ₫</td>
+                            <td>
+                                <input type="number" 
+                                       name="quantity[<?php echo $id; ?>]" 
+                                       value="<?php echo $item['quantity']; ?>" 
+                                       min="0" 
+                                       class="form-control quantity-input" 
+                                       data-product-id="<?php echo $id; ?>"
+                                       style="width: 80px;">
+                            </td>
+                            <td class="subtotal">
+                                <?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?> ₫
+                            </td>
                             <td>
                                 <a href="/Product/removeFromCart/<?php echo $id; ?>" 
                                    class="btn btn-danger btn-sm" 
@@ -323,7 +330,9 @@ body {
                         <i class="fas fa-sync-alt me-2"></i> Cập nhật giỏ hàng
                     </button>
                     <div class="product-price">
-                        Tổng cộng: <strong><?php echo number_format($total, 0, ',', '.'); ?> ₫</strong>
+                        Tổng cộng: <strong class="total-amount">
+                            <?php echo number_format($total, 0, ',', '.'); ?> ₫
+                        </strong>
                     </div>
                 </div>
                 <a href="/Product/checkout" class="btn btn-success">
@@ -331,6 +340,116 @@ body {
                 </a>
             </div>
         </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const quantityInputs = document.querySelectorAll('.quantity-input');
+                const totalElement = document.querySelector('.total-amount');
+                let updateTimeout;
+
+                function formatNumber(number) {
+                    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ₫';
+                }
+
+                function updateSubtotal(row) {
+                    const price = parseFloat(row.querySelector('.price').dataset.price);
+                    const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
+                    const subtotal = price * quantity;
+                    row.querySelector('.subtotal').textContent = formatNumber(subtotal);
+                    return subtotal;
+                }
+
+                function updateTotal() {
+                    let total = 0;
+                    document.querySelectorAll('tbody tr').forEach(row => {
+                        total += updateSubtotal(row);
+                    });
+                    totalElement.textContent = formatNumber(total);
+                }
+
+                function ajaxUpdateCart(productId, quantity) {
+                    clearTimeout(updateTimeout);
+                    
+                    // Hiển thị biểu tượng loading hoặc thông báo đang cập nhật
+                    const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+                    const subtotalCell = row.querySelector('.subtotal');
+                    subtotalCell.innerHTML += ' <small><i class="fas fa-sync fa-spin"></i></small>';
+                    
+                    updateTimeout = setTimeout(function() {
+                        const formData = new FormData();
+                        formData.append('product_id', productId);
+                        formData.append('quantity', quantity);
+                        
+                        fetch('/Product/ajaxUpdateCart', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (data.removed) {
+                                    // Nếu sản phẩm bị xóa (số lượng = 0)
+                                    row.remove();
+                                } else {
+                                    // Cập nhật subtotal cho sản phẩm
+                                    subtotalCell.textContent = data.formattedSubtotal;
+                                }
+                                
+                                // Cập nhật tổng giỏ hàng
+                                totalElement.textContent = data.formattedTotal;
+                                
+                                // Kiểm tra xem còn sản phẩm trong giỏ hàng không
+                                if (document.querySelectorAll('tbody tr').length === 0) {
+                                    location.reload(); // Tải lại trang để hiển thị giỏ hàng trống
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Lỗi khi cập nhật giỏ hàng:', error);
+                            subtotalCell.querySelector('small').remove();
+                        });
+                    }, 500); // Đợi 500ms trước khi gửi request để tránh gửi quá nhiều request
+                }
+
+                quantityInputs.forEach(input => {
+                    // Xử lý khi giá trị input thay đổi (khi người dùng nhập hoặc sử dụng nút tăng/giảm)
+                    input.addEventListener('change', function() {
+                        if (this.value < 0) this.value = 0;
+                        const productId = this.dataset.productId;
+                        const quantity = parseInt(this.value);
+                        
+                        ajaxUpdateCart(productId, quantity);
+                    });
+                    
+                    // Xử lý khi người dùng nhấn nút tăng/giảm (arrows) của input type number
+                    input.addEventListener('input', function() {
+                        updateSubtotal(this.closest('tr'));
+                        updateTotal();
+                    });
+                });
+                
+                // Ngăn form submit thông thường, chỉ sử dụng khi nhấn nút "Cập nhật giỏ hàng"
+                document.getElementById('cartForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Gửi form qua AJAX để cập nhật tất cả cùng lúc
+                    const formData = new FormData(this);
+                    
+                    fetch('/Product/updateCart', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                });
+            });
+        </script>
     <?php else: ?>
         <div class="empty-products">
             <div class="empty-icon">
@@ -344,5 +463,4 @@ body {
         </div>
     <?php endif; ?>
 </div>
-
 <?php include 'app/views/shares/footer.php'; ?>

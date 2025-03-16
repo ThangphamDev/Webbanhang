@@ -20,6 +20,49 @@ category_name
         $result = $stmt->fetchAll(PDO::FETCH_OBJ); 
         return $result; 
     } 
+
+    public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null) 
+{
+    $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name,
+              c.id as category_id 
+              FROM " . $this->table_name . " p 
+              LEFT JOIN category c ON p.category_id = c.id
+              WHERE 1=1";
+    
+    $params = [];
+    
+    if ($category_id !== null && $category_id !== 'all') {
+        $query .= " AND p.category_id = :category_id";
+        $params[':category_id'] = $category_id;
+    }
+    
+    if ($min_price !== null) {
+        $query .= " AND p.price >= :min_price";
+        $params[':min_price'] = $min_price;
+    }
+    
+    if ($max_price !== null) {
+        $query .= " AND p.price <= :max_price";
+        $params[':max_price'] = $max_price;
+    }
+    
+    // Giả sử có trường rating trong database. Nếu không có, bạn có thể bỏ phần này
+    if ($rating !== null) {
+        $query .= " AND p.rating >= :rating";
+        $params[':rating'] = $rating;
+    }
+    
+    $stmt = $this->conn->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_OBJ);
+    return $result;
+}
+    
  
     public function getProductById($id) 
     { 

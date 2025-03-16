@@ -391,7 +391,7 @@
                 <!-- Search Box -->
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="form-control search-input" placeholder="Tìm kiếm sản phẩm...">
+                    <input type="text" class="form-control search-input" placeholder="    Tìm kiếm sản phẩm...">
                 </div>
 
                 <!-- Right Side (Cart and User) -->
