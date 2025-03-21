@@ -93,6 +93,7 @@ class AccountController {
                 $pwd_hashed = $account->password;
                 if (password_verify($password, $pwd_hashed)) {
                     $_SESSION['username'] = $account->username;
+                    $_SESSION['role'] = $account->role;
                     header('Location: /Product/');
                     exit();
                 } else {

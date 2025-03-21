@@ -2,6 +2,7 @@
 // Require necessary files
 require_once 'app/config/database.php';
 require_once 'app/models/CategoryModel.php';
+require_once 'app/helpers/SessionHelper.php';
 
 class CategoryController {
     private $categoryModel;
@@ -12,6 +13,10 @@ class CategoryController {
         $this->categoryModel = new CategoryModel($this->db);
     }
 
+    private function isAdmin() {
+        return SessionHelper::isAdmin();
+    }
+
     // Hiển thị danh sách danh mục (action: index)
     public function index() {
         $categories = $this->categoryModel->getCategories();
@@ -20,6 +25,10 @@ class CategoryController {
 
     // Thêm danh mục mới (action: add)
     public function add() {
+        if (!$this->isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = $_POST['name'] ?? '';
             $description = $_POST['description'] ?? '';
@@ -46,6 +55,14 @@ class CategoryController {
 
     // Sửa danh mục (action: edit)
     public function edit($id) {
+        if (!$this->isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
+        if (!$this->isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         $category = $this->categoryModel->getById($id);
         if (!$category) {
             header("Location: /Category");
@@ -56,6 +73,10 @@ class CategoryController {
 
     // Cập nhật danh mục (action: update)
     public function update() {
+        if (!$this->isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
+            exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? 0;
             $name = $_POST['name'] ?? '';

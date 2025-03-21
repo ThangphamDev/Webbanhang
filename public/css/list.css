@@ -488,55 +488,42 @@ img {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
-    color: var(--text-medium);
     cursor: pointer;
-    user-select: none;
-    position: relative;
+    padding: 6px 0;
 }
 
-.filter-option input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
+.filter-option input[type="checkbox"] {
+    display: none;
 }
 
-.checkmark {
-    position: relative;
-    height: 18px;
+.filter-option .checkmark {
     width: 18px;
-    background-color: var(--white);
-    border: 1px solid var(--gray);
-    border-radius: 3px;
-    transition: var(--transition);
+    height: 18px;
+    border: 2px solid var(--gray);
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.2s ease;
 }
 
-.filter-option:hover input ~ .checkmark {
-    border-color: var(--gray-dark);
-}
-
-.filter-option input:checked ~ .checkmark {
-    background-color: var(--primary);
+.filter-option input[type="checkbox"]:checked + .checkmark {
+    background: var(--primary);
     border-color: var(--primary);
 }
 
-.checkmark:after {
-    content: "";
+.filter-option input[type="checkbox"]:checked + .checkmark:after {
+    content: '';
     position: absolute;
-    display: none;
-    left: 6px;
+    left: 5px;
     top: 2px;
     width: 4px;
-    height: 9px;
+    height: 8px;
     border: solid white;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
 
-.filter-option input:checked ~ .checkmark:after {
-    display: block;
+.filter-option:hover .checkmark {
+    border-color: var(--primary);
 }
 
 .option-name {
@@ -551,6 +538,7 @@ img {
     border-radius: var(--radius-sm);
 }
 
+/* Price Range Slider */
 .price-range {
     padding: 10px 0;
 }
@@ -559,6 +547,39 @@ img {
     position: relative;
     height: 6px;
     margin: 20px 10px;
+}
+
+.range-min, .range-max {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+}
+
+.range-min::-webkit-slider-thumb,
+.range-max::-webkit-slider-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--primary);
+    pointer-events: auto;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.range-min::-moz-range-thumb,
+.range-max::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid var(--primary);
+    pointer-events: auto;
+    -moz-appearance: none;
+    cursor: pointer;
 }
 
 .range-track {
@@ -578,35 +599,15 @@ img {
     right: 25%;
 }
 
-.range-thumb {
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    background: var(--white);
-    border: 2px solid var(--primary);
-    border-radius: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-.range-thumb-min {
-    left: 25%;
-}
-
-.range-thumb-max {
-    left: 75%;
-}
-
 .range-values {
     display: flex;
     justify-content: space-between;
-    margin-top: 10px;
-    font-size: 13px;
+    margin-top: 20px;
+    font-size: 14px;
     color: var(--text-medium);
 }
 
+/* Star Rating in Filters */
 .star-rating {
     display: flex;
     align-items: center;
@@ -614,8 +615,12 @@ img {
 }
 
 .star-rating i {
-    color: var(--yellow);
+    color: var(--gray);
     font-size: 14px;
+}
+
+.star-rating i.active {
+    color: var(--yellow);
 }
 
 .sidebar-cta {
@@ -847,23 +852,23 @@ img {
     color: var(--text-light);
 }
 
-.product-price {
+.product-info .product-price {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
 }
 
-.price-old {
-    color: var(--text-light);
+.product-info .old-price {
+    color: #999;
     text-decoration: line-through;
     font-size: 14px;
 }
 
-.price-current {
-    font-size: 18px;
+.product-info .current-price {
+    font-size: 20px;
     font-weight: 700;
-    color: var(--primary);
+    color: #e53935;
 }
 
 .product-description {
@@ -877,39 +882,53 @@ img {
     -webkit-box-orient: vertical;
 }
 
-.product-actions-admin {
+.product-info .product-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 10px;
     padding-top: 15px;
-    border-top: 1px solid var(--gray-light);
+    border-top: 1px solid #eceff1;
+    margin-top: 15px;
 }
 
-.action-link {
-    display: flex;
+.product-info .btn-edit {
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 5px 10px;
-    border-radius: var(--radius-sm);
-    transition: var(--transition);
-}
-
-.edit-link {
-    color: var(--blue);
-}
-
-.edit-link:hover {
+    gap: 6px;
+    padding: 8px 16px;
+    margin-right: auto  ;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #2196f3;
     background: rgba(33, 150, 243, 0.1);
+    transition: all 0.2s ease;
 }
 
-.delete-link {
-    color: var(--red);
+.product-info .btn-edit:hover {
+    background: #2196f3;
+    color: white;
+    transform: translateY(-2px);
 }
 
-.delete-link:hover {
+.product-info .btn-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #f44336;
     background: rgba(244, 67, 54, 0.1);
+    transition: all 0.2s ease;
+}
+
+.product-info .btn-delete:hover {
+    background: #f44336;
+    color: white;
+    transform: translateY(-2px);
 }
 
 /* Pagination */
@@ -1111,17 +1130,26 @@ img {
         font-size: 14px;
     }
     
-    .product-price {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
+    .product-info .product-price {
+        gap: 6px;
+        margin-bottom: 10px;
     }
     
-    .price-current {
-        font-size: 16px;
+    .product-info .current-price {
+        font-size: 18px;
+    }
+    
+    .product-info .old-price {
+        font-size: 13px;
     }
     
     .product-actions-quick {
         display: none;
+    }
+
+    .product-info .btn-edit,
+    .product-info .btn-delete {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }

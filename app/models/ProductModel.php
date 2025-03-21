@@ -22,48 +22,81 @@ category_name
     } 
 
     public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null) 
-{
-    $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name,
-              c.id as category_id 
-              FROM " . $this->table_name . " p 
-              LEFT JOIN category c ON p.category_id = c.id
-              WHERE 1=1";
-    
-    $params = [];
-    
-    if ($category_id !== null && $category_id !== 'all') {
-        $query .= " AND p.category_id = :category_id";
-        $params[':category_id'] = $category_id;
+    {
+        $query = "SELECT p.*, c.name as category_name 
+                  FROM " . $this->table_name . " p 
+                  LEFT JOIN category c ON p.category_id = c.id
+                  WHERE 1=1";
+        
+        $params = [];
+        
+        if ($category_id !== null && $category_id !== 'all') {
+            $query .= " AND p.category_id = :category_id";
+            $params[':category_id'] = $category_id;
+        }
+        
+        if ($min_price !== null) {
+            $query .= " AND p.price >= :min_price";
+            $params[':min_price'] = $min_price;
+        }
+        
+        if ($max_price !== null) {
+            $query .= " AND p.price <= :max_price";
+            $params[':max_price'] = $max_price;
+        }
+        
+        if ($rating !== null) {
+            $query .= " AND p.rating >= :rating";
+            $params[':rating'] = $rating;
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function getProductCount($category_id = null) 
+    {
+        $query = "SELECT COUNT(*) as count FROM " . $this->table_name . " p";
+        $params = [];
+        
+        if ($category_id !== null && $category_id !== 'all') {
+            $query .= " WHERE p.category_id = :category_id";
+            $params[':category_id'] = $category_id;
+        }
+        
+        // Add conditions for price and rating if they exist in the request
+        if (isset($_GET['min_price'])) {
+            $query .= ($category_id === null ? " WHERE" : " AND") . " p.price >= :min_price";
+            $params[':min_price'] = $_GET['min_price'];
+        }
+        
+        if (isset($_GET['max_price'])) {
+            $query .= ($category_id === null && !isset($_GET['min_price']) ? " WHERE" : " AND") . " p.price <= :max_price";
+            $params[':max_price'] = $_GET['max_price'];
+        }
+        
+        if (isset($_GET['rating'])) {
+            $query .= ($category_id === null && !isset($_GET['min_price']) && !isset($_GET['max_price']) ? " WHERE" : " AND") . " p.rating >= :rating";
+            $params[':rating'] = $_GET['rating'];
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_OBJ);
+        return $result->count;
     }
     
-    if ($min_price !== null) {
-        $query .= " AND p.price >= :min_price";
-        $params[':min_price'] = $min_price;
-    }
-    
-    if ($max_price !== null) {
-        $query .= " AND p.price <= :max_price";
-        $params[':max_price'] = $max_price;
-    }
-    
-    // Giả sử có trường rating trong database. Nếu không có, bạn có thể bỏ phần này
-    if ($rating !== null) {
-        $query .= " AND p.rating >= :rating";
-        $params[':rating'] = $rating;
-    }
-    
-    $stmt = $this->conn->prepare($query);
-    
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->fetchAll(PDO::FETCH_OBJ);
-    return $result;
-}
-    
- 
     public function getProductById($id) 
     { 
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id"; 
@@ -146,5 +179,13 @@ return true;
 } 
 return false; 
 } 
+
+public function getPriceRange() 
+{
+    $query = "SELECT MIN(price) as min_price, MAX(price) as max_price FROM " . $this->table_name;
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_OBJ);
+}
 } 
 ?>

@@ -375,16 +375,20 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                    <?php if (SessionHelper::isAdmin()): ?>
                         <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
                             <i class="fas fa-plus-circle"></i>
                             Thêm sản phẩm
                         </a>
+                        <?php endif; ?>
                     </li>
                     <li class="nav-item">
+                    <?php if (SessionHelper::isAdmin()): ?>
                         <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Category') === 0) ? 'active' : ''; ?>" href="/Category">
                             <i class="fas fa-tags"></i>
                             Danh mục
                         </a>
+                    <?php endif; ?>
                     </li>
                 </ul>
 

@@ -15,22 +15,64 @@ class ProductController
     }
 
     public function filter() 
-{
-    $category_id = isset($_GET['category']) ? $_GET['category'] : null;
-    $min_price = isset($_GET['min_price']) ? $_GET['min_price'] : 0;
-    $max_price = isset($_GET['max_price']) ? $_GET['max_price'] : 10000000;
-    $rating = isset($_GET['rating']) ? $_GET['rating'] : null;
-    
-    $products = $this->productModel->getFilteredProducts($category_id, $min_price, $max_price, $rating);
-    $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : [];
-    
-    include 'app/views/product/list.php';
-}
-
-    public function index() 
     {
+        // Get filter parameters from GET request
+        $category_id = isset($_GET['category']) ? $_GET['category'] : null;
+        $min_price = isset($_GET['min_price']) ? (float)$_GET['min_price'] : null;
+        $max_price = isset($_GET['max_price']) ? (float)$_GET['max_price'] : null;
+        $rating = isset($_GET['rating']) ? (int)$_GET['rating'] : null;
+        
+        // Get filtered products
+        $products = $this->productModel->getFilteredProducts($category_id, $min_price, $max_price, $rating);
+        
+        // Get all categories for the filter sidebar
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        
+        // Add product count to each category based on current filters
+        foreach ($categories as $category) {
+            $category->product_count = $this->productModel->getProductCount($category->id);
+        }
+        
+        // Get price range for products
+        $price_range = $this->productModel->getPriceRange();
+        $min_product_price = $price_range->min_price ?? 0;
+        $max_product_price = $price_range->max_price ?? 1000000;
+        
+        // If this is an AJAX request, return JSON
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'products' => $products,
+                'min_price' => $min_product_price,
+                'max_price' => $max_product_price,
+                'categories' => $categories
+            ]);
+            exit;
+        }
+        
+        // Otherwise, include the view
+        include 'app/views/product/list.php';
+    }
+
+    private function isAdmin() {
+        return SessionHelper::isAdmin();
+    }
+
+    public function index() {
+        // Get all products
         $products = $this->productModel->getProducts();
-        $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : []; // Lấy danh sách ID sản phẩm trong giỏ hàng
+        
+        // Get all categories for the filter sidebar
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        
+        // Get price range for products
+        $price_range = $this->productModel->getPriceRange();
+        $min_product_price = $price_range->min_price ?? 0;
+        $max_product_price = $price_range->max_price ?? 1000000;
+        
+        // Include the view
         include 'app/views/product/list.php';
     }
 
@@ -150,94 +192,92 @@ class ProductController
         } 
     } 
  
-    public function add() 
-    { 
-        $categories = (new CategoryModel($this->db))->getCategories(); 
-        include_once 'app/views/product/add.php'; 
-    } 
- 
-    public function save() 
-    { 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') { 
-            $name = $_POST['name'] ?? ''; 
-            $description = $_POST['description'] ?? ''; 
-            $price = $_POST['price'] ?? ''; 
-            $category_id = $_POST['category_id'] ?? null; 
- 
-            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) { 
-                $image = $this->uploadImage($_FILES['image']); 
-            } else { 
-                $image = ""; 
-            } 
-           
-            $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image); 
- 
-            if (is_array($result)) { 
-                $errors = $result; 
-                $categories = (new CategoryModel($this->db))->getCategories(); 
-                include 'app/views/product/add.php'; 
-            } else {
-                header('Location: /Product'); 
-            } 
+    public function add() {
+        if (!$this->isAdmin()) {
+        echo "Bạn không có quyền truy cập chức năng này!";
+        exit;
+        }
+        $categories = (new CategoryModel($this->db))->getCategories();
+        include_once 'app/views/product/add.php';
         } 
-    } 
  
-    public function edit($id) 
-    { 
-        $product = $this->productModel->getProductById($id); 
-        $categories = (new CategoryModel($this->db))->getCategories(); 
- 
-        if ($product) { 
-            include 'app/views/product/edit.php'; 
-        } else { 
-            echo "Không thấy sản phẩm."; 
-        } 
-    } 
- 
-    public function update() 
-    { 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
-            $id = $_POST['id']; 
-            $name = $_POST['name']; 
-            $description = $_POST['description']; 
-            $price = $_POST['price']; 
-            $category_id = $_POST['category_id']; 
- 
-            if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) { 
-                $image = $this->uploadImage($_FILES['image']); 
-            } else { 
-                $image = $_POST['existing_image']; 
-            } 
- 
-            $edit = $this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image); 
- 
-            if ($edit) { 
-                header('Location: /Product'); 
-            } else { 
-                echo "Đã xảy ra lỗi khi lưu sản phẩm."; 
-            } 
-        } 
-    } 
- 
-    public function delete($id) 
-    { 
-        // Kiểm tra xem sản phẩm có trong giỏ hàng không
-        $cartItems = isset($_SESSION['cart']) ? array_keys($_SESSION['cart']) : [];
-        if (in_array($id, $cartItems)) {
-            // Nếu sản phẩm trong giỏ hàng, hiển thị thông báo lỗi và không xóa
-            $_SESSION['error'] = "Không thể xóa sản phẩm này vì nó đang trong giỏ hàng!";
-            header('Location: /Product');
+        public function save() {
+            if (!$this->isAdmin()) {
+            echo "Bạn không có quyền truy cập chức năng này!";
             exit;
-        }
-
-        // Nếu không trong giỏ hàng, tiến hành xóa
-        if ($this->productModel->deleteProduct($id)) {
-            $_SESSION['success'] = "Sản phẩm đã được xóa thành công!";
+            }
+            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = $_POST['price'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
+            $image = (isset($_FILES['image']) && $_FILES['image']['error'] == 0)
+            ? $this->uploadImage($_FILES['image'])
+            : "";
+            $result = $this->productModel->addProduct($name, $description, $price,
+            
+            $category_id, $image);
+            
+            if (is_array($result)) {
+            $errors = $result;
+            $categories = (new CategoryModel($this->db))->getCategories();
+            include 'app/views/product/add.php';
+            } else {
             header('Location: /Product');
-        } else {
-            $_SESSION['error'] = "Đã xảy ra lỗi khi xóa sản phẩm.";
-            header('Location: /Product');
-        }
+            }
+            }
+            } 
+ 
+            public function edit($id) {
+                if (!$this->isAdmin()) {
+                echo "Bạn không có quyền truy cập chức năng này!";
+                exit;
+                }
+                $product = $this->productModel->getProductById($id);
+                $categories = (new CategoryModel($this->db))->getCategories();
+                if ($product) {
+                include 'app/views/product/edit.php';
+                } else {
+                echo "Không thấy sản phẩm.";
+                }
+                } 
+ 
+                public function update() {
+                    if (!$this->isAdmin()) {
+                    echo "Bạn không có quyền truy cập chức năng này!";
+                    exit;
+                }
+                if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $id = $_POST['id'];
+                $name = $_POST['name'];
+                $description = $_POST['description'];
+                $price = $_POST['price'];
+                $category_id = $_POST['category_id'];
+                $image = (isset($_FILES['image']) && $_FILES['image']['error'] == 0)
+                ? $this->uploadImage($_FILES['image'])
+                : $_POST['existing_image'];
+                $edit = $this->productModel->updateProduct($id, $name, $description,
+                
+                $price, $category_id, $image);
+                if ($edit) {
+                header('Location: /Product');
+                } else {
+                echo "Đã xảy ra lỗi khi lưu sản phẩm.";
+                }
+                }
+                } 
+ 
+                public function delete($id) {
+                    if (!$this->isAdmin()) {
+                    echo "Bạn không có quyền truy cập chức năng này!";
+                    exit;
+                    }
+                    if ($this->productModel->deleteProduct($id)) {
+                    header('Location: /Product');
+                    } else {
+                    echo "Đã xảy ra lỗi khi xóa sản phẩm.";
+                    }
+                       
     } 
  
     private function uploadImage($file) 
