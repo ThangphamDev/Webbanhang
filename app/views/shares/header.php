@@ -415,13 +415,7 @@
                     <li class="nav-item">
                         <a class="nav-link cart-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/cart') === 0) ? 'active' : ''; ?>" href="/Product/cart">
                             <i class="fas fa-shopping-cart"></i>
-                            Giỏ hàng
-                            <?php 
-                            if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
-                                $cart_count = array_sum(array_column($_SESSION['cart'], 'quantity'));
-                                echo '<span class="badge">' . $cart_count . '</span>';
-                            }
-                            ?>
+                            <span class="badge cart-count"><?php echo array_sum(array_column($_SESSION['cart'] ?? [], 'quantity')) ?? 0; ?></span>
                         </a>
                     </li>
 

@@ -968,6 +968,184 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Khởi tạo các chức năng
     handleViewToggle();
+
+    // Thêm hàm cập nhật số lượng giỏ hàng
+    function updateCartCount(count) {
+        // Cập nhật tất cả các phần tử hiển thị số lượng giỏ hàng
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(element => {
+            if (element) {
+                element.textContent = count;
+                // Hiển thị badge nếu có sản phẩm trong giỏ hàng
+                if (count > 0) {
+                    element.style.display = 'inline-block';
+                } else {
+                    element.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Cập nhật hàm handleAddToCart
+    function handleAddToCart() {
+        document.addEventListener('click', function(e) {
+            const addToCartBtn = e.target.closest('.btn-add-to-cart');
+            if (!addToCartBtn) return;
+            
+            e.preventDefault();
+            const productId = addToCartBtn.getAttribute('href').split('/').pop();
+            
+            // Thêm hiệu ứng loading
+            addToCartBtn.classList.add('loading');
+            const originalText = addToCartBtn.innerHTML;
+            addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
+            
+            fetch(`/Product/addToCartAjax/${productId}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật số lượng trong giỏ hàng
+                    updateCartCount(data.cartCount);
+                    
+                    // Hiển thị thông báo thành công
+                    showNotification('success', data.message);
+                } else {
+                    throw new Error(data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', error.message);
+            })
+            .finally(() => {
+                // Khôi phục nút sau khi hoàn thành
+                setTimeout(() => {
+                    addToCartBtn.classList.remove('loading');
+                    addToCartBtn.innerHTML = originalText;
+                }, 500);
+            });
+        });
+    }
+
+    // Thêm hàm hiển thị thông báo
+    function showNotification(type, message) {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Thêm class để hiển thị notification với animation
+        setTimeout(() => notification.classList.add('show'), 100);
+        
+        // Xóa notification sau 3 giây
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Thêm CSS cho notification
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(-320px);
+        }
+        
+        .notification.success {
+            border-left: 4px solid #43a047;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #e53935;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification i {
+            font-size: 1.2rem;
+        }
+        
+        .notification.success i {
+            color: #43a047;
+        }
+        
+        .notification.error i {
+            color: #e53935;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Thêm CSS cho loading state
+    const loadingStyle = document.createElement('style');
+    loadingStyle.textContent = `
+        .btn-add-to-cart.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .btn-add-to-cart.loading .fa-spinner {
+            margin-right: 5px;
+        }
+    `;
+    document.head.appendChild(loadingStyle);
+
+    // Thêm CSS cho cart count
+    const cartCountStyle = document.createElement('style');
+    cartCountStyle.textContent = `
+        .cart-count {
+            display: inline-block;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .cart-count:empty {
+            display: none;
+        }
+    `;
+    document.head.appendChild(cartCountStyle);
+
+    // Gọi các hàm xử lý khi trang được tải
+    handleAddToCart();
 });
 </script>
 <?php include 'app/views/shares/footer.php'; ?>

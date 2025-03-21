@@ -468,5 +468,43 @@ class ProductController
             exit;
         }
     }
+
+    public function addToCartAjax($id) {
+        $product = $this->productModel->getProductById($id);
+        $response = ['success' => false, 'message' => 'Có lỗi xảy ra'];
+        
+        if ($product) {
+            if (!isset($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
+
+            if (isset($_SESSION['cart'][$id])) {
+                $_SESSION['cart'][$id]['quantity'] += 1;
+            } else {
+                $_SESSION['cart'][$id] = [
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => 1,
+                    'image' => $product->image,
+                    'category_id' => $product->category_id
+                ];
+            }
+            
+            // Tính tổng số lượng sản phẩm trong giỏ hàng
+            $totalQuantity = 0;
+            foreach ($_SESSION['cart'] as $item) {
+                $totalQuantity += $item['quantity'];
+            }
+            
+            $response = [
+                'success' => true,
+                'message' => 'Đã thêm sản phẩm vào giỏ hàng',
+                'cartCount' => $totalQuantity
+            ];
+        }
+        
+        header('Content-Type: application/json');
+        echo json_encode($response);
+    }
 }
 ?>

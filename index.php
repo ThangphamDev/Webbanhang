@@ -34,3 +34,8 @@ if (!method_exists($controller, $action)) {
 
 // Gọi action với các tham số còn lại (nếu có) 
 call_user_func_array([$controller, $action], array_slice($url, 2));
+
+// Xử lý các request AJAX
+if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+    header('Content-Type: application/json');
+}
