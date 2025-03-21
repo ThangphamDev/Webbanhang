@@ -237,7 +237,8 @@
             transform: translateY(-1px);
         }
 
-        .dropdown-menu {
+        /* Header Dropdown Menu */
+        .navbar .dropdown-menu {
             border-radius: 8px;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
             border: none;
@@ -245,6 +246,46 @@
             margin-top: 8px;
             background-color: var(--white);
             animation: slideDown 0.2s ease;
+            display: none;
+            position: absolute;
+            right: 0;
+            min-width: 200px;
+            z-index: 1000;
+        }
+
+        .navbar .dropdown-menu.show {
+            display: block;
+        }
+
+        .navbar .dropdown-item {
+            padding: 6px 12px;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+            transition: all var(--transition-speed) ease;
+            display: block;
+            text-decoration: none;
+        }
+
+        .navbar .dropdown-item i {
+            margin-right: 6px;
+            color: var(--primary-color);
+            width: 16px;
+            text-align: center;
+        }
+
+        .navbar .dropdown-item:hover, 
+        .navbar .dropdown-item:focus {
+            background-color: var(--hover-bg);
+            color: var(--primary-dark);
+        }
+
+        .navbar .dropdown-item.text-danger i {
+            color: #dc3545;
+        }
+
+        .navbar .dropdown-divider {
+            margin: 4px 0;
+            border-top-color: var(--border-color);
         }
 
         @keyframes slideDown {
@@ -256,35 +297,6 @@
                 opacity: 1;
                 transform: translateY(0);
             }
-        }
-
-        .dropdown-item {
-            padding: 6px 12px;
-            color: var(--text-dark);
-            font-size: 0.85rem;
-            transition: all var(--transition-speed) ease;
-        }
-
-        .dropdown-item i {
-            margin-right: 6px;
-            color: var(--primary-color);
-            width: 16px;
-            text-align: center;
-        }
-
-        .dropdown-item:hover, 
-        .dropdown-item:focus {
-            background-color: var(--hover-bg);
-            color: var(--primary-dark);
-        }
-
-        .dropdown-item.text-danger i {
-            color: #dc3545;
-        }
-
-        .dropdown-divider {
-            margin: 4px 0;
-            border-top-color: var(--border-color);
         }
 
         /* Main Content Padding */

@@ -55,6 +55,73 @@ class ProductController
         include 'app/views/product/list.php';
     }
 
+    public function search() 
+    {
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        
+        if (!empty($keyword)) {
+            $products = $this->productModel->searchProducts($keyword);
+        } else {
+            $products = $this->productModel->getProducts();
+        }
+        
+        // Get all categories for the filter sidebar
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        
+        // Get price range for products
+        $price_range = $this->productModel->getPriceRange();
+        $min_product_price = $price_range->min_price ?? 0;
+        $max_product_price = $price_range->max_price ?? 1000000;
+        
+        // If this is an AJAX request, return JSON
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'products' => $products,
+                'min_price' => $min_product_price,
+                'max_price' => $max_product_price,
+                'categories' => $categories
+            ]);
+            exit;
+        }
+        
+        // Otherwise, include the view
+        include 'app/views/product/list.php';
+    }
+
+    public function sort() 
+    {
+        $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'popular';
+        
+        // Get sorted products
+        $products = $this->productModel->sortProducts($sortBy);
+        
+        // Get all categories for the filter sidebar
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        
+        // Get price range for products
+        $price_range = $this->productModel->getPriceRange();
+        $min_product_price = $price_range->min_price ?? 0;
+        $max_product_price = $price_range->max_price ?? 1000000;
+        
+        // If this is an AJAX request, return JSON
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'products' => $products,
+                'min_price' => $min_product_price,
+                'max_price' => $max_product_price,
+                'categories' => $categories
+            ]);
+            exit;
+        }
+        
+        // Otherwise, include the view
+        include 'app/views/product/list.php';
+    }
+
     private function isAdmin() {
         return SessionHelper::isAdmin();
     }

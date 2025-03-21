@@ -1,7 +1,338 @@
 <?php include 'app/views/shares/header.php'; ?>
 <link rel="stylesheet" href="/public/css/list.css">
 <style>
-    
+    /* CSS cho dropdown menu */
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        min-width: 200px;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        margin-top: 5px;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: var(--light-bg);
+        color: var(--primary-color);
+    }
+
+    .dropdown-item.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .dropdown-toggle:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .dropdown-toggle i {
+        font-size: 0.9rem;
+    }
+
+    /* CSS cho ô tìm kiếm */
+    .search-box {
+        position: relative;
+        min-width: 200px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        padding-right: 2.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(67, 160, 71, 0.15);
+        outline: none;
+    }
+
+    .search-button {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: color 0.3s ease;
+    }
+
+    .search-button:hover {
+        color: var(--primary-color);
+    }
+
+    /* Product Grid/List View */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        transition: all 0.3s ease;
+    }
+
+    /* Ẩn nút thêm vào giỏ dạng list view trong chế độ grid */
+    .btn-add-to-cart.list-view-only {
+        display: none;
+    }
+
+    .product-grid.list-view {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .product-grid.list-view .product-card {
+        display: grid;
+        grid-template-columns: 150px 1fr auto;
+        align-items: start;
+        padding: 15px;
+        gap: 20px;
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .product-grid.list-view .product-thumb {
+        width: 150px;
+        height: 150px;
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .product-grid.list-view .product-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-grid.list-view .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-right: 15px;
+    }
+
+    .product-grid.list-view .product-actions-quick {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .product-grid.list-view .hover-action {
+        position: static;
+        opacity: 1;
+        transform: none;
+        margin-top: auto;
+    }
+
+    .product-grid.list-view .product-category {
+        font-size: 0.85rem;
+        color: var(--primary-color);
+        margin-bottom: 2px;
+    }
+
+    .product-grid.list-view .product-name {
+        font-size: 1.1rem;
+        margin: 0;
+        line-height: 1.4;
+        font-weight: 500;
+    }
+
+    .product-grid.list-view .product-name a {
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .product-grid.list-view .product-name a:hover {
+        color: var(--primary-color);
+    }
+
+    .product-grid.list-view .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .product-grid.list-view .product-price {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    .product-grid.list-view .current-price {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .product-grid.list-view .old-price {
+        font-size: 1rem;
+        color: var(--text-muted);
+        text-decoration: line-through;
+    }
+
+    .product-grid.list-view .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .product-grid.list-view .action-btn:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--white);
+        transform: translateY(-1px);
+    }
+
+    .product-grid.list-view .btn-add-to-cart.list-view-only {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--primary-color);
+        color: var(--white);
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+
+    .product-grid.list-view .btn-add-to-cart.list-view-only:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .product-grid.list-view .btn-add-to-cart.list-view-only i {
+        font-size: 1rem;
+    }
+
+    .product-grid.list-view .product-badges {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
+        display: flex;
+        gap: 5px;
+    }
+
+    .product-grid.list-view .badge {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .product-grid.list-view .badge-sale {
+        background: #ff4757;
+        color: white;
+    }
+
+    .product-grid.list-view .badge-new {
+        background: #2ed573;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .product-grid.list-view .product-card {
+            grid-template-columns: 120px 1fr;
+        }
+
+        .product-grid.list-view .product-thumb {
+            width: 120px;
+            height: 120px;
+        }
+
+        .product-grid.list-view .product-actions-quick {
+            display: none;
+        }
+    }
+
+    /* View Toggle Buttons */
+    .view-toggle {
+        display: flex;
+        gap: 8px;
+        margin-left: 15px;
+    }
+
+    .view-toggle button {
+        background: none;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .view-toggle button:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle button.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .view-toggle button i {
+        font-size: 1rem;
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -46,22 +377,22 @@
                 <div class="filter-sort">
                     <div class="dropdown">
                         <button class="dropdown-toggle">
-                            <i class="fas fa-sort-amount-down"></i>
-                            <span>Sắp xếp</span>
+                            <span>Phổ biến nhất</span>
+                            <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item active">Phổ biến nhất</a>
-                            <a href="#" class="dropdown-item">Giá: Thấp đến cao</a>
-                            <a href="#" class="dropdown-item">Giá: Cao đến thấp</a>
-                            <a href="#" class="dropdown-item">Mới nhất</a>
+                            <a href="#" class="dropdown-item active" data-sort="popular">Phổ biến nhất</a>
+                            <a href="#" class="dropdown-item" data-sort="price_asc">Giá: Thấp đến cao</a>
+                            <a href="#" class="dropdown-item" data-sort="price_desc">Giá: Cao đến thấp</a>
+                            <a href="#" class="dropdown-item" data-sort="newest">Mới nhất</a>
                         </div>
                     </div>
                     
-                    <div class="view-options">
-                        <button class="view-btn active" data-view="grid">
+                    <div class="view-toggle">
+                        <button class="grid-view active" title="Xem dạng lưới">
                             <i class="fas fa-th-large"></i>
                         </button>
-                        <button class="view-btn" data-view="list">
+                        <button class="list-view" title="Xem dạng danh sách">
                             <i class="fas fa-list"></i>
                         </button>
                     </div>
@@ -223,6 +554,11 @@
                                             <span class="old-price"><?php echo number_format($product->old_price, 0, ',', '.'); ?> ₫</span>
                                         <?php endif; ?>
                                     </div>
+
+                                    <a href="/Product/addToCart/<?php echo $product->id; ?>" class="btn-add-to-cart list-view-only">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span>Thêm vào giỏ</span>
+                                    </a>
                                     
                                     <?php if (SessionHelper::isAdmin()): ?>
                                     <div class="product-actions">
@@ -276,6 +612,122 @@
 <script>
 let timeout;
 const productGrid = document.querySelector('.product-grid');
+
+// Thêm biến để lưu timeout
+let searchTimeout;
+
+// Thêm hàm xử lý tìm kiếm
+function handleSearch() {
+    const searchInput = document.querySelector('.catalog-tools .search-input');
+    const searchButton = document.querySelector('.catalog-tools .search-button');
+    if (!searchInput) return;
+
+    // Xử lý khi nhấn nút tìm kiếm
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            const keyword = searchInput.value.trim();
+            if (keyword.length >= 2) {
+                fetch(`/Product/search?keyword=${encodeURIComponent(keyword)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    updateProductGrid(data.products);
+                })
+                .catch(error => console.error('Error searching products:', error));
+            }
+        });
+    }
+
+    // Xử lý khi gõ
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const keyword = this.value.trim();
+        
+        // Đợi 300ms sau khi người dùng ngừng gõ
+        searchTimeout = setTimeout(() => {
+            if (keyword.length >= 2) {
+                fetch(`/Product/search?keyword=${encodeURIComponent(keyword)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    updateProductGrid(data.products);
+                })
+                .catch(error => console.error('Error searching products:', error));
+            } else {
+                // Nếu từ khóa quá ngắn, hiển thị tất cả sản phẩm
+                fetch('/Product/search', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    updateProductGrid(data.products);
+                })
+                .catch(error => console.error('Error fetching products:', error));
+            }
+        }, 300);
+    });
+}
+
+// Thêm hàm xử lý sắp xếp
+function handleSort() {
+    const dropdownToggle = document.querySelector('.catalog-tools .dropdown-toggle');
+    const dropdownMenu = document.querySelector('.catalog-tools .dropdown-menu');
+    const dropdownItems = document.querySelectorAll('.catalog-tools .dropdown-menu .dropdown-item');
+    
+    if (!dropdownToggle || !dropdownMenu || !dropdownItems.length) return;
+
+    // Toggle dropdown menu khi click vào nút sắp xếp
+    dropdownToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('show');
+    });
+
+    // Đóng dropdown khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+        }
+    });
+
+    // Xử lý khi chọn option
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            dropdownItems.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            
+            const dropdownToggleText = dropdownToggle.querySelector('span');
+            if (dropdownToggleText) {
+                dropdownToggleText.textContent = this.textContent;
+            }
+            
+            const sortValue = this.getAttribute('data-sort');
+            
+            fetch(`/Product/sort?sort=${encodeURIComponent(sortValue)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateProductGrid(data.products);
+                dropdownMenu.classList.remove('show');
+            })
+            .catch(error => console.error('Error sorting products:', error));
+        });
+    });
+}
 
 function updateProductGrid(products) {
     productGrid.innerHTML = '';
@@ -342,6 +794,11 @@ function updateProductGrid(products) {
                             `<span class="old-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.old_price)}</span>` : ''
                         }
                     </div>
+                    
+                    <a href="/Product/addToCart/${product.id}" class="btn-add-to-cart list-view-only">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Thêm vào giỏ</span>
+                    </a>
                     
                     <?php if (SessionHelper::isAdmin()): ?>
                     <div class="product-actions">
@@ -469,5 +926,48 @@ priceMax.addEventListener('input', updatePriceRange);
 
 // Initialize price range on page load
 updatePriceRange();
+
+// Gọi các hàm xử lý khi trang được tải
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+    handleSearch();
+    handleSort();
+
+    // Xử lý chuyển đổi hiển thị
+    function handleViewToggle() {
+        const gridViewBtn = document.querySelector('.view-toggle .grid-view');
+        const listViewBtn = document.querySelector('.view-toggle .list-view');
+        const productGrid = document.querySelector('.product-grid');
+        
+        if (!gridViewBtn || !listViewBtn || !productGrid) return;
+
+        // Lấy view đã lưu từ localStorage hoặc mặc định là grid
+        const savedView = localStorage.getItem('productView') || 'grid';
+        if (savedView === 'list') {
+            productGrid.classList.add('list-view');
+            gridViewBtn.classList.remove('active');
+            listViewBtn.classList.add('active');
+        }
+
+        // Xử lý click vào nút grid view
+        gridViewBtn.addEventListener('click', function() {
+            productGrid.classList.remove('list-view');
+            gridViewBtn.classList.add('active');
+            listViewBtn.classList.remove('active');
+            localStorage.setItem('productView', 'grid');
+        });
+
+        // Xử lý click vào nút list view
+        listViewBtn.addEventListener('click', function() {
+            productGrid.classList.add('list-view');
+            gridViewBtn.classList.remove('active');
+            listViewBtn.classList.add('active');
+            localStorage.setItem('productView', 'list');
+        });
+    }
+
+    // Khởi tạo các chức năng
+    handleViewToggle();
+});
 </script>
 <?php include 'app/views/shares/footer.php'; ?>

@@ -187,5 +187,47 @@ public function getPriceRange()
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_OBJ);
 }
+
+public function searchProducts($keyword) 
+{
+    $query = "SELECT p.*, c.name as category_name 
+              FROM " . $this->table_name . " p 
+              LEFT JOIN category c ON p.category_id = c.id
+              WHERE p.name LIKE :keyword OR p.description LIKE :keyword";
+    
+    $stmt = $this->conn->prepare($query);
+    $keyword = "%{$keyword}%";
+    $stmt->bindParam(':keyword', $keyword);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function sortProducts($sortBy = 'popular') 
+{
+    $query = "SELECT p.*, c.name as category_name 
+              FROM " . $this->table_name . " p 
+              LEFT JOIN category c ON p.category_id = c.id";
+    
+    switch ($sortBy) {
+        case 'price_asc':
+            $query .= " ORDER BY p.price ASC";
+            break;
+        case 'price_desc':
+            $query .= " ORDER BY p.price DESC";
+            break;
+        case 'newest':
+            $query .= " ORDER BY p.id DESC";
+            break;
+        case 'popular':
+        default:
+            $query .= " ORDER BY p.rating DESC, p.rating_count DESC";
+            break;
+    }
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
 } 
 ?>
