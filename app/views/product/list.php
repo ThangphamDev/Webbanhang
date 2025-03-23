@@ -333,6 +333,16 @@
     .view-toggle button i {
         font-size: 1rem;
     }
+
+    .product-rating .stars .fa-star {
+        color: #FFCC00;
+        font-size: 0.9rem;
+        margin-right: 1px;
+    }
+
+    .product-rating .stars .fa-star.active {
+        color: #FFCC00;
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -549,9 +559,19 @@
                                     </div>
                                     
                                     <div class="product-price">
-                                        <span class="current-price"><?php echo number_format($product->price, 0, ',', '.'); ?> ₫</span>
-                                        <?php if (!empty($product->old_price)): ?>
-                                            <span class="old-price"><?php echo number_format($product->old_price, 0, ',', '.'); ?> ₫</span>
+                                        <span class="current-price"><?php echo number_format($product->price, 0, ',', '.'); ?>₫</span>
+                                        <?php if (!empty($product->old_price) && $product->old_price > $product->price): ?>
+                                            <span class="old-price"><?php echo number_format($product->old_price, 0, ',', '.'); ?>₫</span>
+                                            <?php 
+                                                $discount_percent = round(($product->old_price - $product->price) / $product->old_price * 100);
+                                            ?>
+                                            <span class="discount-badge">-<?php echo $discount_percent; ?>%</span>
+                                        <?php else: ?>
+                                            <?php 
+                                                $original_price = round($product->price / 0.67);
+                                            ?>
+                                            <span class="old-price"><?php echo number_format($original_price, 0, ',', '.'); ?>₫</span>
+                                            <span class="discount-badge">-33%</span>
                                         <?php endif; ?>
                                     </div>
 
@@ -789,9 +809,12 @@ function updateProductGrid(products) {
                     </div>
                     
                     <div class="product-price">
-                        <span class="current-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</span>
-                        ${product.old_price ? 
-                            `<span class="old-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.old_price)}</span>` : ''
+                        <span class="current-price">${new Intl.NumberFormat('vi-VN').format(product.price)}₫</span>
+                        ${product.old_price && product.old_price > product.price ? 
+                            `<span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.old_price)}₫</span>
+                             <span class="discount-badge">-${Math.round((product.old_price - product.price) / product.old_price * 100)}%</span>` :
+                            `<span class="old-price">${new Intl.NumberFormat('vi-VN').format(Math.round(product.price / 0.67))}₫</span>
+                             <span class="discount-badge">-33%</span>`
                         }
                     </div>
                     

@@ -14,6 +14,7 @@ class ProductController
         $this->productModel = new ProductModel($this->db);
     }
 
+    
     public function filter() 
     {
         // Get filter parameters from GET request
