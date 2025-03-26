@@ -495,6 +495,50 @@
     .price-filter-dropdown:hover .dropdown-icon {
         color: var(--primary-color);
     }
+
+    /* CSS cho dropdown filter danh mục */
+    .category-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .category-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .category-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .category-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .category-filter-dropdown .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .category-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -573,24 +617,16 @@
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Danh mục</h4>
-                    <div class="filter-options">
-                        <label class="filter-option">
-                            <input type="checkbox" value="all" name="category" 
-                                   <?php echo (!isset($_GET['category']) || $_GET['category'] === 'all') ? 'checked' : ''; ?>
-                                   onchange="handleCategoryChange(this)">
-                            <span class="checkmark"></span>
-                            <span class="option-name">Tất cả</span>
-                        </label>
-                        <?php foreach ($categories as $category): ?>
-                        <label class="filter-option">
-                            <input type="checkbox" value="<?php echo $category->id; ?>" name="category"
-                                   <?php echo (isset($_GET['category']) && $_GET['category'] == $category->id) ? 'checked' : ''; ?>
-                                   onchange="handleCategoryChange(this)">
-                            <span class="checkmark"></span>
-                            <span class="option-name"><?php echo htmlspecialchars($category->name); ?></span>
-                            <span class="option-count"><?php echo $category->product_count ?? 0; ?></span>
-                        </label>
-                        <?php endforeach; ?>
+                    <div class="category-filter-dropdown">
+                        <select class="category-select" onchange="handleCategorySelectChange(this)">
+                            <option value="all" <?php echo (!isset($_GET['category']) || $_GET['category'] === 'all') ? 'selected' : ''; ?>>Tất cả</option>
+                            <?php foreach ($categories as $category): ?>
+                            <option value="<?php echo $category->id; ?>" <?php echo (isset($_GET['category']) && $_GET['category'] == $category->id) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($category->name); ?> (<?php echo $category->product_count ?? 0; ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
@@ -839,6 +875,7 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+                    scrollToBreadcrumb();
                 })
                 .catch(error => console.error('Error searching products:', error));
             }
@@ -866,6 +903,7 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+                    scrollToBreadcrumb();
                 })
                 .catch(error => console.error('Error searching products:', error));
             } else {
@@ -880,6 +918,7 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+                    scrollToBreadcrumb();
                 })
                 .catch(error => console.error('Error fetching products:', error));
             }
@@ -938,6 +977,7 @@ function handleSort() {
                 updateProductGrid(data.products);
                 updatePagination(data.pagination);
                 dropdownMenu.classList.remove('show');
+                scrollToBreadcrumb();
             })
             .catch(error => console.error('Error sorting products:', error));
         });
@@ -1151,13 +1191,7 @@ function updatePagination(pagination) {
                 }
                 
                 // Cuộn đến phần breadcrumb
-                const breadcrumb = document.querySelector('.breadcrumb');
-                if (breadcrumb) {
-                    window.scrollTo({
-                        top: breadcrumb.offsetTop - 20,
-                        behavior: 'smooth'
-                    });
-                }
+                scrollToBreadcrumb();
             })
             .catch(error => console.error('Error fetching products:', error));
         });
@@ -1166,7 +1200,7 @@ function updatePagination(pagination) {
 
 async function applyFilters() {
     const urlParams = new URLSearchParams(window.location.search);
-    const category = document.querySelector('input[name="category"]:checked')?.value;
+    const category = document.querySelector('.category-select').value;
     const rating = document.querySelector('input[name="rating"]:checked')?.value;
     
     // Lấy giá trị min_price và max_price từ URL nếu đã có
@@ -1211,37 +1245,42 @@ async function applyFilters() {
         
         // Cập nhật số lượng sản phẩm cho mỗi danh mục
         if (data.categories) {
-            data.categories.forEach(category => {
-                const countElement = document.querySelector(`input[value="${category.id}"]`)
-                    ?.closest('.filter-option')
-                    ?.querySelector('.option-count');
-                if (countElement) {
-                    countElement.textContent = `(${category.product_count})`;
-                }
-            });
+            // Cập nhật tùy chọn trong dropdown danh mục
+            const categorySelect = document.querySelector('.category-select');
+            if (categorySelect) {
+                const options = categorySelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value !== 'all') {
+                        const categoryData = data.categories.find(cat => cat.id == option.value);
+                        if (categoryData) {
+                            option.textContent = `${categoryData.name} (${categoryData.product_count})`;
+                        }
+                    }
+                });
+            }
         }
         
         // Cuộn đến phần breadcrumb
-        const breadcrumb = document.querySelector('.breadcrumb');
-        if (breadcrumb) {
-            window.scrollTo({
-                top: breadcrumb.offsetTop - 20,
-                behavior: 'smooth'
-            });
-        }
+        scrollToBreadcrumb();
     } catch (error) {
         console.error('Error applying filters:', error);
     }
 }
 
-function handleCategoryChange(checkbox) {
-    if (checkbox.checked) {
-        // Bỏ chọn các checkbox danh mục khác
-        document.querySelectorAll('input[name="category"]').forEach(cb => {
-            if (cb !== checkbox) cb.checked = false;
-        });
-        applyFilters();
+function handleCategorySelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (selectedValue && selectedValue !== 'all') {
+        urlParams.set('category', selectedValue);
+    } else {
+        urlParams.delete('category');
     }
+    
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    
+    applyFilters();
 }
 
 function handleRatingChange(checkbox) {
@@ -1274,9 +1313,8 @@ function handlePriceSelectChange(select) {
 }
 
 function clearAllFilters() {
-    // Reset tất cả checkbox danh mục
-    document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
-    document.querySelector('input[value="all"]').checked = true;
+    // Reset dropdown danh mục về "Tất cả"
+    document.querySelector('.category-select').value = 'all';
     
     // Reset dropdown giá về "Tất cả"
     document.querySelector('.price-select').value = '';
@@ -1426,7 +1464,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Đảm bảo số lượng sản phẩm trong danh mục được hiển thị đúng khi tải trang
-    if (document.querySelector('input[name="category"][value="all"]:checked')) {
+    if (document.querySelector('.category-select').value === 'all') {
         // Nếu đang ở chế độ "Tất cả", cần lấy số lượng sản phẩm cho mỗi danh mục
         updateCategoryCounts();
     }
@@ -1527,17 +1565,33 @@ async function updateCategoryCounts() {
         const data = await response.json();
         
         if (data.categories) {
-            data.categories.forEach(category => {
-                const countElement = document.querySelector(`input[value="${category.id}"]`)
-                    ?.closest('.filter-option')
-                    ?.querySelector('.option-count');
-                if (countElement) {
-                    countElement.textContent = `(${category.product_count})`;
-                }
-            });
+            // Cập nhật tùy chọn trong dropdown danh mục
+            const categorySelect = document.querySelector('.category-select');
+            if (categorySelect) {
+                const options = categorySelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value !== 'all') {
+                        const categoryData = data.categories.find(cat => cat.id == option.value);
+                        if (categoryData) {
+                            option.textContent = `${categoryData.name} (${categoryData.product_count})`;
+                        }
+                    }
+                });
+            }
         }
     } catch (error) {
         console.error('Error fetching category counts:', error);
+    }
+}
+
+// Hàm cuộn trang đến phần breadcrumb
+function scrollToBreadcrumb() {
+    const breadcrumb = document.querySelector('.breadcrumb');
+    if (breadcrumb) {
+        window.scrollTo({
+            top: breadcrumb.offsetTop - 20,
+            behavior: 'smooth'
+        });
     }
 }
 </script>

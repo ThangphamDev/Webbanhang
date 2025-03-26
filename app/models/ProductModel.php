@@ -237,9 +237,12 @@ public function sortProducts($sortBy = 'popular', $page = 1, $per_page = 12)
         case 'newest':
             $query .= " ORDER BY p.id DESC";
             break;
+        case 'oldest':
+            $query .= " ORDER BY p.id ASC";
+            break;
         case 'popular':
         default:
-            $query .= " ORDER BY p.rating DESC, p.rating_count DESC";
+            $query .= " ORDER BY p.id ASC";
             break;
     }
     

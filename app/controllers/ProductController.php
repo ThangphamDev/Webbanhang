@@ -198,7 +198,8 @@ class ProductController
         if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
         
         // Get all products with pagination
-        $products = $this->productModel->getProducts($page, $products_per_page);
+        $sort = isset($_GET['sort']) ? $_GET['sort'] : 'popular';
+        $products = $this->productModel->sortProducts($sort, $page, $products_per_page);
         
         // Get all categories for the filter sidebar
         $categoryModel = new CategoryModel($this->db);

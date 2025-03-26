@@ -381,7 +381,7 @@
                 <!-- Menu Links -->
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item">
-                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/') === 0 && strpos($_SERVER['REQUEST_URI'], '/Product/add') === false) ? 'active' : ''; ?>" href="/Product/">
+                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/') === 0 && strpos($_SERVER['REQUEST_URI'], '/Product/add') === false) ? 'active' : ''; ?>" href="/Product/" id="products-list-link">
                             <i class="fas fa-list"></i>
                             Danh sách sản phẩm
                         </a>
@@ -472,6 +472,26 @@
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Xử lý cuộn trang khi click vào nút danh sách sản phẩm
+        document.addEventListener('DOMContentLoaded', function() {
+            const productsListLink = document.getElementById('products-list-link');
+            if (productsListLink && window.location.pathname === '/Product/') {
+                productsListLink.addEventListener('click', function(e) {
+                    // Nếu đang ở trang danh sách sản phẩm, ngăn chặn hành vi mặc định và cuộn trang
+                    e.preventDefault();
+                    
+                    // Cuộn đến breadcrumb
+                    const breadcrumb = document.querySelector('.breadcrumb');
+                    if (breadcrumb) {
+                        window.scrollTo({
+                            top: breadcrumb.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
             }
         });
     </script>
