@@ -334,16 +334,6 @@
         font-size: 1rem;
     }
 
-    .product-rating .stars .fa-star {
-        color: #FFCC00;
-        font-size: 0.9rem;
-        margin-right: 1px;
-    }
-
-    .product-rating .stars .fa-star.active {
-        color: #FFCC00;
-    }
-
     /* CSS cho thanh trượt giá cải tiến */
     .price-range {
         padding: 5px 0 20px;
@@ -539,6 +529,55 @@
     .category-filter-dropdown:hover .dropdown-icon {
         color: var(--primary-color);
     }
+
+    /* CSS cho dropdown filter đánh giá */
+    .rating-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .rating-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .rating-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .rating-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .rating-filter-dropdown .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .rating-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
+    
+    /* Hiển thị sao vàng trong option */
+    .rating-select option i, .rating-select option .fa-star {
+        color: #FFCC00;
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -647,20 +686,26 @@
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Đánh giá</h4>
-                    <div class="filter-options">
-                        <?php for($i = 5; $i >= 1; $i--): ?>
-                        <label class="filter-option">
-                            <input type="checkbox" value="<?php echo $i; ?>" name="rating"
-                                   <?php echo (isset($_GET['rating']) && $_GET['rating'] == $i) ? 'checked' : ''; ?>
-                                   onchange="handleRatingChange(this)">
-                            <span class="checkmark"></span>
-                            <div class="star-rating">
-                                <?php for($j = 1; $j <= 5; $j++): ?>
-                                    <i class="fas fa-star <?php echo $j <= $i ? 'active' : ''; ?>"></i>
+                    <div class="rating-filter-dropdown">
+                        <select class="rating-select" onchange="handleRatingSelectChange(this)">
+                            <option value="" <?php echo (!isset($_GET['rating'])) ? 'selected' : ''; ?>>Tất cả đánh giá</option>
+                            <?php for($i = 5; $i >= 1; $i--): ?>
+                            <option value="<?php echo $i; ?>" <?php echo (isset($_GET['rating']) && $_GET['rating'] == $i) ? 'selected' : ''; ?>>
+                                <?php 
+                                // Hiển thị số sao bằng nhiều icon sao
+                                for($j = 1; $j <= $i; $j++): ?>
+                                ★
                                 <?php endfor; ?>
-                            </div>
-                        </label>
-                        <?php endfor; ?>
+                                <?php 
+                                // Hiển thị sao trống cho phần còn lại
+                                for($j = $i+1; $j <= 5; $j++): ?>
+                                ☆
+                                <?php endfor; ?>
+                                trở lên
+                            </option>
+                            <?php endfor; ?>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
@@ -735,8 +780,13 @@
                                     
                                     <div class="product-rating">
                                         <div class="stars">
-                                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                <i class="fas fa-star <?php echo $i <= $product->rating ? 'active' : ''; ?>"></i>
+                                            <?php 
+                                            // Đảm bảo rating là số hợp lệ
+                                            $rating = isset($product->rating) ? floatval($product->rating) : 0;
+                                            // Hiển thị 5 sao với class active cho những sao đạt rating
+                                            for ($i = 1; $i <= 5; $i++): 
+                                            ?>
+                                                <i class="fas fa-star <?php echo ($i <= $rating) ? 'active' : ''; ?>"></i>
                                             <?php endfor; ?>
                                         </div>
                                         <span class="rating-count">(<?php echo $product->rating_count ?? 0; ?>)</span>
@@ -1051,7 +1101,7 @@ function updateProductGrid(products) {
                     <div class="product-rating">
                         <div class="stars">
                             ${Array(5).fill().map((_, i) => 
-                                `<i class="fas fa-star ${i < (product.rating || 0) ? 'active' : ''}"></i>`
+                                `<i class="fas fa-star ${i < parseFloat(product.rating || 0) ? 'active' : ''}"></i>`
                             ).join('')}
                         </div>
                         <span class="rating-count">(${product.rating_count || 0})</span>
@@ -1201,7 +1251,7 @@ function updatePagination(pagination) {
 async function applyFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     const category = document.querySelector('.category-select').value;
-    const rating = document.querySelector('input[name="rating"]:checked')?.value;
+    const rating = document.querySelector('.rating-select').value;
     
     // Lấy giá trị min_price và max_price từ URL nếu đã có
     const minPrice = urlParams.get('min_price');
@@ -1283,14 +1333,20 @@ function handleCategorySelectChange(select) {
     applyFilters();
 }
 
-function handleRatingChange(checkbox) {
-    if (checkbox.checked) {
-        // Bỏ chọn các checkbox rating khác
-        document.querySelectorAll('input[name="rating"]').forEach(cb => {
-            if (cb !== checkbox) cb.checked = false;
-        });
-        applyFilters();
+function handleRatingSelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (selectedValue) {
+        urlParams.set('rating', selectedValue);
+    } else {
+        urlParams.delete('rating');
     }
+    
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    
+    applyFilters();
 }
 
 function handlePriceSelectChange(select) {
@@ -1319,8 +1375,8 @@ function clearAllFilters() {
     // Reset dropdown giá về "Tất cả"
     document.querySelector('.price-select').value = '';
     
-    // Reset tất cả checkbox rating
-    document.querySelectorAll('input[name="rating"]').forEach(cb => cb.checked = false);
+    // Reset dropdown đánh giá về "Tất cả"
+    document.querySelector('.rating-select').value = '';
     
     // Áp dụng bộ lọc với giá trị mặc định
     applyFilters();

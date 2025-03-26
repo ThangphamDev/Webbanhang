@@ -1153,3 +1153,13 @@ img {
         font-size: 13px;
     }
 }
+
+.product-rating .stars .fa-star {
+    color: #e0e0e0; /* Màu xám cho sao không active */
+    font-size: 0.9rem;
+    margin-right: 1px;
+}
+
+.product-rating .stars .fa-star.active {
+    color: #FFCC00; /* Màu vàng cho sao active */
+}
