@@ -584,5 +584,25 @@ class ProductController
         header('Content-Type: application/json');
         echo json_encode($response);
     }
+
+    // Hàm trả về số lượng sản phẩm trong mỗi danh mục
+    public function getCategoryCounts() 
+    {
+        // Get all categories
+        $categoryModel = new CategoryModel($this->db);
+        $categories = $categoryModel->getCategories();
+        
+        // Add product count to each category
+        foreach ($categories as $category) {
+            $category->product_count = $this->productModel->getProductCount($category->id);
+        }
+        
+        // Return JSON response
+        header('Content-Type: application/json');
+        echo json_encode([
+            'categories' => $categories
+        ]);
+        exit;
+    }
 }
 ?>

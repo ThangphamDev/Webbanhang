@@ -343,6 +343,158 @@
     .product-rating .stars .fa-star.active {
         color: #FFCC00;
     }
+
+    /* CSS cho thanh trượt giá cải tiến */
+    .price-range {
+        padding: 5px 0 20px;
+    }
+    
+    .range-slider {
+        position: relative;
+        width: 100%;
+        height: 30px;
+        margin-bottom: 15px;
+    }
+    
+    .range-track {
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background-color: #e0e0e0;
+        border-radius: 2px;
+        top: 13px;
+    }
+    
+    .range-selection {
+        position: absolute;
+        height: 4px;
+        background-color: #4CAF50;
+        border-radius: 2px;
+        top: 13px;
+    }
+    
+    .range-min, .range-max {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        background: transparent;
+        position: absolute;
+        top: 13px;
+        pointer-events: none;
+    }
+    
+    .range-min::-webkit-slider-thumb, .range-max::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+        margin-top: -7px;
+        pointer-events: auto;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .range-min::-moz-range-thumb, .range-max::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+        pointer-events: auto;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .range-min:hover::-webkit-slider-thumb, .range-max:hover::-webkit-slider-thumb,
+    .range-min:active::-webkit-slider-thumb, .range-max:active::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        margin-top: -9px;
+        background: #3d8b40;
+    }
+    
+    .range-min:hover::-moz-range-thumb, .range-max:hover::-moz-range-thumb,
+    .range-min:active::-moz-range-thumb, .range-max:active::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        background: #3d8b40;
+    }
+    
+    .range-min::-webkit-slider-runnable-track, .range-max::-webkit-slider-runnable-track,
+    .range-min::-moz-range-track, .range-max::-moz-range-track {
+        cursor: pointer;
+        background: transparent;
+        border: none;
+    }
+    
+    .range-values {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    
+    #price-min-value, #price-max-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        background: #f5f5f5;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    #price-min-value:hover, #price-max-value:hover {
+        background: #e9e9e9;
+    }
+
+    /* CSS cho dropdown filter giá */
+    .price-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .price-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .price-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .price-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .price-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -444,20 +596,16 @@
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Giá</h4>
-                    <div class="price-range">
-                        <div class="range-slider">
-                            <input type="range" id="price-min" class="range-min" min="<?php echo $min_product_price; ?>" 
-                                   max="<?php echo $max_product_price; ?>" value="<?php echo $min_price ?? $min_product_price; ?>">
-                            <input type="range" id="price-max" class="range-max" min="<?php echo $min_product_price; ?>" 
-                                   max="<?php echo $max_product_price; ?>" value="<?php echo $max_price ?? $max_product_price; ?>">
-                            <div class="range-track">
-                                <div class="range-selection"></div>
-                            </div>
-                        </div>
-                        <div class="range-values">
-                            <span id="price-min-value"><?php echo number_format($min_price ?? $min_product_price, 0, ',', '.'); ?>₫</span>
-                            <span id="price-max-value"><?php echo number_format($max_price ?? $max_product_price, 0, ',', '.'); ?>₫</span>
-                        </div>
+                    <div class="price-filter-dropdown">
+                        <select class="price-select" onchange="handlePriceSelectChange(this)">
+                            <option value="" <?php echo (!isset($_GET['min_price']) && !isset($_GET['max_price'])) ? 'selected' : ''; ?>>Tất cả</option>
+                            <option value="0-500000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '0' && isset($_GET['max_price']) && $_GET['max_price'] == '500000') ? 'selected' : ''; ?>>Dưới 500K</option>
+                            <option value="500000-1000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '500000' && isset($_GET['max_price']) && $_GET['max_price'] == '1000000') ? 'selected' : ''; ?>>500K - 1Tr</option>
+                            <option value="1000000-10000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '1000000' && isset($_GET['max_price']) && $_GET['max_price'] == '10000000') ? 'selected' : ''; ?>>1Tr - 10Tr</option>
+                            <option value="10000000-100000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '10000000' && isset($_GET['max_price']) && $_GET['max_price'] == '100000000') ? 'selected' : ''; ?>>10Tr - 100Tr</option>
+                            <option value="100000000-999999999" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '100000000') ? 'selected' : ''; ?>>Trên 100Tr</option>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
@@ -1020,8 +1168,10 @@ async function applyFilters() {
     const urlParams = new URLSearchParams(window.location.search);
     const category = document.querySelector('input[name="category"]:checked')?.value;
     const rating = document.querySelector('input[name="rating"]:checked')?.value;
-    const minPrice = document.getElementById('price-min').value;
-    const maxPrice = document.getElementById('price-max').value;
+    
+    // Lấy giá trị min_price và max_price từ URL nếu đã có
+    const minPrice = urlParams.get('min_price');
+    const maxPrice = urlParams.get('max_price');
     
     // Giữ lại tham số sort nếu có
     const sort = urlParams.get('sort');
@@ -1104,54 +1254,38 @@ function handleRatingChange(checkbox) {
     }
 }
 
-function clearAllFilters() {
-    // Reset tất cả checkbox
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.querySelector('input[value="all"]').checked = true;
+function handlePriceSelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
     
-    // Reset thanh giá
-    const priceMin = document.getElementById('price-min');
-    const priceMax = document.getElementById('price-max');
-    priceMin.value = priceMin.min;
-    priceMax.value = priceMax.max;
+    if (selectedValue) {
+        const [minPrice, maxPrice] = selectedValue.split('-');
+        urlParams.set('min_price', minPrice);
+        urlParams.set('max_price', maxPrice);
+    } else {
+        urlParams.delete('min_price');
+        urlParams.delete('max_price');
+    }
     
-    // Cập nhật hiển thị giá
-    updatePriceRange();
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
     
-    // Áp dụng bộ lọc
     applyFilters();
 }
 
-// Thanh trượt giá
-const priceMin = document.getElementById('price-min');
-const priceMax = document.getElementById('price-max');
-const priceMinValue = document.getElementById('price-min-value');
-const priceMaxValue = document.getElementById('price-max-value');
-
-function updatePriceRange() {
-    if (!priceMin || !priceMax || !priceMinValue || !priceMaxValue) return;
+function clearAllFilters() {
+    // Reset tất cả checkbox danh mục
+    document.querySelectorAll('input[name="category"]').forEach(cb => cb.checked = false);
+    document.querySelector('input[value="all"]').checked = true;
     
-    const min = parseInt(priceMin.value);
-    const max = parseInt(priceMax.value);
+    // Reset dropdown giá về "Tất cả"
+    document.querySelector('.price-select').value = '';
     
-    if (min > max) {
-        priceMin.value = max;
-        priceMax.value = min;
-    }
+    // Reset tất cả checkbox rating
+    document.querySelectorAll('input[name="rating"]').forEach(cb => cb.checked = false);
     
-    priceMinValue.textContent = new Intl.NumberFormat('vi-VN').format(priceMin.value) + '₫';
-    priceMaxValue.textContent = new Intl.NumberFormat('vi-VN').format(priceMax.value) + '₫';
-    
-    const rangeSelection = document.querySelector('.range-selection');
-    if (rangeSelection) {
-        const percentage1 = ((priceMin.value - priceMin.min) / (priceMin.max - priceMin.min)) * 100;
-        const percentage2 = ((priceMax.value - priceMin.min) / (priceMin.max - priceMin.min)) * 100;
-        rangeSelection.style.left = percentage1 + '%';
-        rangeSelection.style.right = (100 - percentage2) + '%';
-    }
-    
-    clearTimeout(timeout);
-    timeout = setTimeout(applyFilters, 500);
+    // Áp dụng bộ lọc với giá trị mặc định
+    applyFilters();
 }
 
 // Xử lý chuyển đổi hiển thị lưới/danh sách
@@ -1279,13 +1413,6 @@ function showNotification(type, message) {
 
 // Khởi tạo khi trang đã tải xong
 document.addEventListener('DOMContentLoaded', function() {
-    // Thêm event listeners cho thanh giá
-    if (priceMin) priceMin.addEventListener('input', updatePriceRange);
-    if (priceMax) priceMax.addEventListener('input', updatePriceRange);
-    
-    // Khởi tạo thanh giá khi trang tải
-    if (priceMin && priceMax) updatePriceRange();
-    
     // Khởi tạo các chức năng
     handleSearch();
     handleSort();
@@ -1296,6 +1423,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const paginationData = <?php echo isset($pagination) ? json_encode($pagination) : 'null'; ?>;
     if (paginationData) {
         updatePagination(paginationData);
+    }
+    
+    // Đảm bảo số lượng sản phẩm trong danh mục được hiển thị đúng khi tải trang
+    if (document.querySelector('input[name="category"][value="all"]:checked')) {
+        // Nếu đang ở chế độ "Tất cả", cần lấy số lượng sản phẩm cho mỗi danh mục
+        updateCategoryCounts();
     }
     
     // Thêm CSS cho notification
@@ -1382,5 +1515,30 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(cartCountStyle);
 });
+
+// Hàm cập nhật số lượng sản phẩm cho mỗi danh mục
+async function updateCategoryCounts() {
+    try {
+        const response = await fetch('/Product/getCategoryCounts', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await response.json();
+        
+        if (data.categories) {
+            data.categories.forEach(category => {
+                const countElement = document.querySelector(`input[value="${category.id}"]`)
+                    ?.closest('.filter-option')
+                    ?.querySelector('.option-count');
+                if (countElement) {
+                    countElement.textContent = `(${category.product_count})`;
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching category counts:', error);
+    }
+}
 </script>
 <?php include 'app/views/shares/footer.php'; ?>
