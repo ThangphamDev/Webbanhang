@@ -21,8 +21,9 @@ category_name
         return $result; 
     } 
 
-    public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null) 
+    public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null, $page = 1, $per_page = 12) 
     {
+        $offset = ($page - 1) * $per_page;
         $query = "SELECT p.*, c.name as category_name 
                   FROM " . $this->table_name . " p 
                   LEFT JOIN category c ON p.category_id = c.id
@@ -49,11 +50,24 @@ category_name
             $query .= " AND p.rating >= :rating";
             $params[':rating'] = $rating;
         }
+
+        $query .= " ORDER BY p.id ASC";
+        
+        if ($page > 0 && $per_page > 0) {
+            $offset = ($page - 1) * $per_page;
+            $query .= " LIMIT :limit OFFSET :offset";
+            $params[':limit'] = (int)$per_page;
+            $params[':offset'] = (int)$offset;
+        }
         
         $stmt = $this->conn->prepare($query);
         
         foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
+            if ($key == ':limit' || $key == ':offset') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
         }
         
         $stmt->execute();
@@ -221,7 +235,7 @@ public function sortProducts($sortBy = 'popular')
             break;
         case 'popular':
         default:
-            $query .= " ORDER BY p.rating DESC, p.rating_count DESC";
+            $query .= " ORDER BY p.id ASC";
             break;
     }
     
