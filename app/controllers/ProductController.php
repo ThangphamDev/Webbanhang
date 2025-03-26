@@ -605,5 +605,37 @@ class ProductController
         ]);
         exit;
     }
+
+    public function buyNow($id) 
+    {
+        // Lấy thông tin sản phẩm
+        $product = $this->productModel->getProductById($id);
+        if (!$product) {
+            echo "Không tìm thấy sản phẩm.";
+            return;
+        }
+        
+        // Lấy số lượng từ query parameter
+        $quantity = isset($_GET['quantity']) ? (int)$_GET['quantity'] : 1;
+        if ($quantity < 1) $quantity = 1;
+        
+        // Khởi tạo giỏ hàng nếu chưa có
+        if (!isset($_SESSION['cart'])) {
+            $_SESSION['cart'] = [];
+        }
+        
+        // Thêm sản phẩm vào giỏ hàng hoặc cập nhật số lượng
+        $_SESSION['cart'][$id] = [
+            'name' => $product->name,
+            'price' => $product->price,
+            'quantity' => $quantity,
+            'image' => $product->image,
+            'category_id' => $product->category_id
+        ];
+        
+        // Chuyển hướng đến trang thanh toán
+        header('Location: /Product/checkout');
+        exit;
+    }
 }
 ?>
