@@ -22,9 +22,19 @@ class ProductController
         $min_price = isset($_GET['min_price']) ? (float)$_GET['min_price'] : null;
         $max_price = isset($_GET['max_price']) ? (float)$_GET['max_price'] : null;
         $rating = isset($_GET['rating']) ? (int)$_GET['rating'] : null;
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $products_per_page = 12; // 4 dòng x 3 cột
         
-        // Get filtered products
-        $products = $this->productModel->getFilteredProducts($category_id, $min_price, $max_price, $rating);
+        // Lấy tổng số sản phẩm để tính số trang
+        $total_count = $this->productModel->getTotalFilteredProducts($category_id, $min_price, $max_price, $rating);
+        $total_pages = ceil($total_count / $products_per_page);
+        
+        // Đảm bảo trang hiện tại hợp lệ
+        if ($page < 1) $page = 1;
+        if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
+        
+        // Get filtered products with pagination
+        $products = $this->productModel->getFilteredProducts($category_id, $min_price, $max_price, $rating, $page, $products_per_page);
         
         // Get all categories for the filter sidebar
         $categoryModel = new CategoryModel($this->db);
@@ -40,6 +50,14 @@ class ProductController
         $min_product_price = $price_range->min_price ?? 0;
         $max_product_price = $price_range->max_price ?? 1000000;
         
+        // Chuẩn bị thông tin phân trang
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $total_pages,
+            'per_page' => $products_per_page,
+            'total_products' => $total_count
+        ];
+        
         // If this is an AJAX request, return JSON
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
             header('Content-Type: application/json');
@@ -47,7 +65,8 @@ class ProductController
                 'products' => $products,
                 'min_price' => $min_product_price,
                 'max_price' => $max_product_price,
-                'categories' => $categories
+                'categories' => $categories,
+                'pagination' => $pagination
             ]);
             exit;
         }
@@ -59,12 +78,23 @@ class ProductController
     public function search() 
     {
         $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $products_per_page = 12; // 4 dòng x 3 cột
         
+        // Lấy tổng số sản phẩm thỏa mãn tìm kiếm
         if (!empty($keyword)) {
-            $products = $this->productModel->searchProducts($keyword);
+            $total_count = $this->productModel->getTotalSearchResults($keyword);
+            $products = $this->productModel->searchProducts($keyword, $page, $products_per_page);
         } else {
+            $total_count = $this->productModel->getTotalProducts();
             $products = $this->productModel->getProducts();
         }
+        
+        $total_pages = ceil($total_count / $products_per_page);
+        
+        // Đảm bảo trang hiện tại hợp lệ
+        if ($page < 1) $page = 1;
+        if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
         
         // Get all categories for the filter sidebar
         $categoryModel = new CategoryModel($this->db);
@@ -75,6 +105,14 @@ class ProductController
         $min_product_price = $price_range->min_price ?? 0;
         $max_product_price = $price_range->max_price ?? 1000000;
         
+        // Chuẩn bị thông tin phân trang
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $total_pages,
+            'per_page' => $products_per_page,
+            'total_products' => $total_count
+        ];
+        
         // If this is an AJAX request, return JSON
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
             header('Content-Type: application/json');
@@ -82,7 +120,8 @@ class ProductController
                 'products' => $products,
                 'min_price' => $min_product_price,
                 'max_price' => $max_product_price,
-                'categories' => $categories
+                'categories' => $categories,
+                'pagination' => $pagination
             ]);
             exit;
         }
@@ -94,9 +133,19 @@ class ProductController
     public function sort() 
     {
         $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'popular';
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $products_per_page = 12; // 4 dòng x 3 cột
         
-        // Get sorted products
-        $products = $this->productModel->sortProducts($sortBy);
+        // Lấy tổng số sản phẩm
+        $total_count = $this->productModel->getTotalProducts();
+        $total_pages = ceil($total_count / $products_per_page);
+        
+        // Đảm bảo trang hiện tại hợp lệ
+        if ($page < 1) $page = 1;
+        if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
+        
+        // Get sorted products with pagination
+        $products = $this->productModel->sortProducts($sortBy, $page, $products_per_page);
         
         // Get all categories for the filter sidebar
         $categoryModel = new CategoryModel($this->db);
@@ -107,6 +156,14 @@ class ProductController
         $min_product_price = $price_range->min_price ?? 0;
         $max_product_price = $price_range->max_price ?? 1000000;
         
+        // Chuẩn bị thông tin phân trang
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $total_pages,
+            'per_page' => $products_per_page,
+            'total_products' => $total_count
+        ];
+        
         // If this is an AJAX request, return JSON
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
             header('Content-Type: application/json');
@@ -114,7 +171,8 @@ class ProductController
                 'products' => $products,
                 'min_price' => $min_product_price,
                 'max_price' => $max_product_price,
-                'categories' => $categories
+                'categories' => $categories,
+                'pagination' => $pagination
             ]);
             exit;
         }
@@ -128,8 +186,19 @@ class ProductController
     }
 
     public function index() {
-        // Get all products
-        $products = $this->productModel->getProducts();
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $products_per_page = 12; // 4 dòng x 3 cột
+        
+        // Lấy tổng số sản phẩm
+        $total_count = $this->productModel->getTotalProducts();
+        $total_pages = ceil($total_count / $products_per_page);
+        
+        // Đảm bảo trang hiện tại hợp lệ
+        if ($page < 1) $page = 1;
+        if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
+        
+        // Get all products with pagination
+        $products = $this->productModel->getProducts($page, $products_per_page);
         
         // Get all categories for the filter sidebar
         $categoryModel = new CategoryModel($this->db);
@@ -139,6 +208,14 @@ class ProductController
         $price_range = $this->productModel->getPriceRange();
         $min_product_price = $price_range->min_price ?? 0;
         $max_product_price = $price_range->max_price ?? 1000000;
+        
+        // Chuẩn bị thông tin phân trang
+        $pagination = [
+            'current_page' => $page,
+            'total_pages' => $total_pages,
+            'per_page' => $products_per_page,
+            'total_products' => $total_count
+        ];
         
         // Include the view
         include 'app/views/product/list.php';

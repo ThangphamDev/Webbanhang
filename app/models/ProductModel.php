@@ -9,20 +9,24 @@ class ProductModel
         $this->conn = $db; 
     } 
  
-    public function getProducts() 
+    public function getProducts($page = 1, $per_page = 12) 
     { 
-        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as 
-category_name 
+        $offset = ($page - 1) * $per_page;
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name 
                   FROM " . $this->table_name . " p 
-                  LEFT JOIN category c ON p.category_id = c.id"; 
+                  LEFT JOIN category c ON p.category_id = c.id
+                  LIMIT :offset, :per_page"; 
         $stmt = $this->conn->prepare($query); 
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
         $stmt->execute(); 
         $result = $stmt->fetchAll(PDO::FETCH_OBJ); 
         return $result; 
     } 
 
-    public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null) 
+    public function getFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null, $page = 1, $per_page = 12) 
     {
+        $offset = ($page - 1) * $per_page;
         $query = "SELECT p.*, c.name as category_name 
                   FROM " . $this->table_name . " p 
                   LEFT JOIN category c ON p.category_id = c.id
@@ -50,10 +54,19 @@ category_name
             $params[':rating'] = $rating;
         }
         
+        // Thêm phân trang
+        $query .= " LIMIT :offset, :per_page";
+        $params[':offset'] = $offset;
+        $params[':per_page'] = $per_page;
+        
         $stmt = $this->conn->prepare($query);
         
         foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
+            if ($key == ':offset' || $key == ':per_page') {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue($key, $value);
+            }
         }
         
         $stmt->execute();
@@ -188,23 +201,28 @@ public function getPriceRange()
     return $stmt->fetch(PDO::FETCH_OBJ);
 }
 
-public function searchProducts($keyword) 
+public function searchProducts($keyword, $page = 1, $per_page = 12) 
 {
+    $offset = ($page - 1) * $per_page;
     $query = "SELECT p.*, c.name as category_name 
               FROM " . $this->table_name . " p 
               LEFT JOIN category c ON p.category_id = c.id
-              WHERE p.name LIKE :keyword OR p.description LIKE :keyword";
+              WHERE p.name LIKE :keyword OR p.description LIKE :keyword
+              LIMIT :offset, :per_page";
     
     $stmt = $this->conn->prepare($query);
     $keyword = "%{$keyword}%";
     $stmt->bindParam(':keyword', $keyword);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
     $stmt->execute();
     
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-public function sortProducts($sortBy = 'popular') 
+public function sortProducts($sortBy = 'popular', $page = 1, $per_page = 12) 
 {
+    $offset = ($page - 1) * $per_page;
     $query = "SELECT p.*, c.name as category_name 
               FROM " . $this->table_name . " p 
               LEFT JOIN category c ON p.category_id = c.id";
@@ -225,9 +243,76 @@ public function sortProducts($sortBy = 'popular')
             break;
     }
     
+    $query .= " LIMIT :offset, :per_page";
+    
     $stmt = $this->conn->prepare($query);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function getTotalSearchResults($keyword)
+{
+    $query = "SELECT COUNT(*) as count 
+              FROM " . $this->table_name . " p 
+              WHERE p.name LIKE :keyword OR p.description LIKE :keyword";
+    
+    $stmt = $this->conn->prepare($query);
+    $keyword = "%{$keyword}%";
+    $stmt->bindParam(':keyword', $keyword);
+    $stmt->execute();
+    
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
+}
+
+public function getTotalFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null)
+{
+    $query = "SELECT COUNT(*) as count 
+              FROM " . $this->table_name . " p 
+              WHERE 1=1";
+    
+    $params = [];
+    
+    if ($category_id !== null && $category_id !== 'all') {
+        $query .= " AND p.category_id = :category_id";
+        $params[':category_id'] = $category_id;
+    }
+    
+    if ($min_price !== null) {
+        $query .= " AND p.price >= :min_price";
+        $params[':min_price'] = $min_price;
+    }
+    
+    if ($max_price !== null) {
+        $query .= " AND p.price <= :max_price";
+        $params[':max_price'] = $max_price;
+    }
+    
+    if ($rating !== null) {
+        $query .= " AND p.rating >= :rating";
+        $params[':rating'] = $rating;
+    }
+    
+    $stmt = $this->conn->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
+}
+
+public function getTotalProducts() 
+{
+    $query = "SELECT COUNT(*) as count FROM " . $this->table_name;
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
 }
 } 
 ?>
