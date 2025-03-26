@@ -261,17 +261,12 @@
                                     <div class="review-header">
                                         <div class="reviewer-info">
                                             <div class="reviewer-avatar">
-                                                <?php if (!empty($review->avatar)): ?>
-                                                    <img src="/<?php echo htmlspecialchars($review->avatar); ?>" 
-                                                         alt="<?php echo htmlspecialchars($review->name); ?>">
-                                                <?php else: ?>
-                                                    <div class="avatar-placeholder">
-                                                        <?php echo strtoupper(substr($review->name, 0, 1)); ?>
-                                                    </div>
-                                                <?php endif; ?>
+                                                <div class="avatar-placeholder">
+                                                    <?php echo strtoupper(substr($review->user_name, 0, 1)); ?>
+                                                </div>
                                             </div>
                                             <div class="reviewer-meta">
-                                                <h4 class="reviewer-name"><?php echo htmlspecialchars($review->name); ?></h4>
+                                                <h4 class="reviewer-name"><?php echo htmlspecialchars($review->user_name); ?></h4>
                                                 <div class="review-date">
                                                     <?php echo date('d/m/Y', strtotime($review->created_at)); ?>
                                                 </div>
@@ -318,7 +313,7 @@
                                 <div class="form-group rating-selector">
                                     <label>Đánh giá của bạn:</label>
                                     <div class="rating-stars">
-                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <?php for ($i = 5; $i >= 1; $i--): ?>
                                             <input type="radio" id="star<?php echo $i; ?>" name="rating" value="<?php echo $i; ?>" <?php echo $i == 5 ? 'checked' : ''; ?>>
                                             <label for="star<?php echo $i; ?>">
                                                 <i class="fas fa-star"></i>
@@ -374,7 +369,7 @@
                             <span class="badge badge-sale">-<?php echo $discount_percent; ?>%</span>
                         <?php endif; ?>
                         
-                        <?php if ((time() - strtotime($rproduct->created_at)) / 86400 < 7): ?>
+                        <?php if ((time() - strtotime($rproduct->created_at ?? '')) / 86400 < 7): ?>
                             <span class="badge badge-new">New</span>
                         <?php endif; ?>
                     </div>
@@ -577,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             for (let i = 0; i < this.files.length; i++) {
                 const file = this.files[i];
-                if (!file.type.startswith('image/')) continue;
+                if (!file.type.startsWith('image/')) continue;
                 
                 const reader = new FileReader();
                 
@@ -628,6 +623,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Thêm hàm hiển thị thông báo
     function showNotification(type, message) {
+        // Sanitize the type
+        if (type !== 'success' && type !== 'error') {
+            type = 'error'; // Default to error for unknown types
+        }
+        
+        // Ensure message is a string
+        if (typeof message !== 'string') {
+            if (message && typeof message === 'object') {
+                try {
+                    message = JSON.stringify(message);
+                } catch (e) {
+                    message = 'Đã xảy ra lỗi không xác định';
+                }
+            } else {
+                message = 'Đã xảy ra lỗi không xác định';
+            }
+        }
+        
+        // Create and add notification to DOM
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.innerHTML = `
@@ -665,6 +679,100 @@ document.addEventListener('DOMContentLoaded', function() {
             // Thêm vào giỏ hàng và chuyển hướng đến trang thanh toán
             window.location.href = `/Product/buyNow/${productId}?quantity=${quantity}`;
         });
+    }
+    
+    // Xử lý gửi đánh giá AJAX
+    const reviewForm = document.querySelector('.review-form');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Hiển thị trạng thái loading
+            const submitBtn = this.querySelector('.btn-submit-review');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(this);
+            
+            fetch('/Product/addReview', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                // Kiểm tra Content-Type
+                const contentType = response.headers.get('Content-Type');
+                logDebugInfo('Response Headers', {
+                    contentType,
+                    status: response.status,
+                    statusText: response.statusText
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Lỗi kết nối đến server (${response.status})`);
+                }
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        logDebugInfo('Non-JSON Response', text.substring(0, 1000));
+                        throw new Error('Server không trả về JSON. Vui lòng liên hệ quản trị viên.');
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                logDebugInfo('Response Data', data);
+                
+                if (data.success) {
+                    // Hiển thị thông báo thành công
+                    showNotification('success', data.message);
+                    
+                    // Reset form
+                    reviewForm.reset();
+                    
+                    // Xóa preview ảnh nếu có
+                    const previewContainer = document.querySelector('.image-preview-container');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = '';
+                    }
+                    
+                    // Làm mới trang để hiển thị đánh giá mới
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Có lỗi xảy ra khi gửi đánh giá');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('error', error.message || 'Có lỗi xảy ra, vui lòng thử lại sau.');
+                
+                // Log lỗi để debug
+                logDebugInfo('Error Details', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+            })
+            .finally(() => {
+                // Khôi phục nút sau khi hoàn thành
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+    
+    // Debug helper - Giúp theo dõi lỗi trong console
+    function logDebugInfo(title, data) {
+        console.group('DEBUG: ' + title);
+        console.log(data);
+        console.groupEnd();
     }
 });
 </script>

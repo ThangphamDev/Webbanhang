@@ -65,6 +65,7 @@ class AccountController {
     public function logout() {
         unset($_SESSION['username']);
         unset($_SESSION['role']);
+        unset($_SESSION['user_id']);
         header('Location: /Product/');
         exit();
     }
@@ -94,6 +95,7 @@ class AccountController {
                 if (password_verify($password, $pwd_hashed)) {
                     $_SESSION['username'] = $account->username;
                     $_SESSION['role'] = $account->role;
+                    $_SESSION['user_id'] = $account->id;
                     header('Location: /Product/');
                     exit();
                 } else {

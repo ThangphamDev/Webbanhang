@@ -329,14 +329,66 @@ class ProductController
     }
  
     public function show($id) 
-    { 
-        $product = $this->productModel->getProductById($id); 
-        if ($product) { 
-            include 'app/views/product/show.php'; 
-        } else { 
-            echo "Không thấy sản phẩm."; 
-        } 
-    } 
+    {
+        $product = $this->productModel->getProductById($id);
+        if (!$product) {
+            header('Location: /Product');
+            exit;
+        }
+        
+        // Lấy ảnh sản phẩm bổ sung nếu có
+        $product_images = $this->getProductImages($id);
+        
+        // Lấy đánh giá của sản phẩm
+        $reviews = $this->getProductReviews($id);
+        
+        // Lấy sản phẩm liên quan
+        $related_products = $this->getRelatedProducts($id, $product->category_id);
+        
+        include 'app/views/product/show.php';
+    }
+    
+    private function getProductReviews($product_id)
+    {
+        try {
+            $query = "SELECT r.*, u.name as user_name
+                     FROM reviews r 
+                     JOIN users u ON r.user_id = u.id 
+                     WHERE r.product_id = :product_id 
+                     ORDER BY r.created_at DESC";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':product_id', $product_id);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_OBJ);
+        } catch (PDOException $e) {
+            // Log lỗi và trả về mảng trống
+            error_log('Lỗi SQL trong getProductReviews: ' . $e->getMessage());
+            return [];
+        }
+    }
+    
+    private function getProductImages($product_id)
+    {
+        // Giả lập lấy ảnh bổ sung của sản phẩm
+        // Trong thực tế, bạn sẽ lấy từ bảng product_images
+        return [];
+    }
+    
+    private function getRelatedProducts($product_id, $category_id, $limit = 4)
+    {
+        $query = "SELECT p.*, c.name as category_name 
+                 FROM product p 
+                 LEFT JOIN category c ON p.category_id = c.id 
+                 WHERE p.category_id = :category_id AND p.id != :product_id 
+                 ORDER BY RAND() 
+                 LIMIT :limit";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':category_id', $category_id);
+        $stmt->bindParam(':product_id', $product_id);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
  
     public function add() {
         if (!$this->isAdmin()) {
@@ -636,6 +688,396 @@ class ProductController
         // Chuyển hướng đến trang thanh toán
         header('Location: /Product/checkout');
         exit;
+    }
+
+    // Thêm hàm mới để kiểm tra và tạo bảng nếu chưa tồn tại
+    private function ensureReviewsTableExists() 
+    {
+        try {
+            // Kiểm tra xem bảng 'reviews' đã tồn tại chưa
+            $query = "SHOW TABLES LIKE 'reviews'";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            $tableExists = $stmt->rowCount() > 0;
+            
+            if (!$tableExists) {
+                // Nếu bảng chưa tồn tại, tạo nó
+                $createTable = "CREATE TABLE reviews (
+                    id INT(11) NOT NULL AUTO_INCREMENT,
+                    product_id INT(11) NOT NULL,
+                    user_id INT(11) NOT NULL,
+                    rating INT(1) NOT NULL,
+                    content TEXT NOT NULL,
+                    images TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    KEY product_id (product_id),
+                    KEY user_id (user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                
+                $this->db->exec($createTable);
+                return true;
+            }
+            
+            return $tableExists;
+        } catch (PDOException $e) {
+            error_log('Lỗi kiểm tra/tạo bảng reviews: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function addReview()
+    {
+        // Tắt hiển thị lỗi PHP và bắt đầu output buffering
+        ini_set('display_errors', 0);
+        error_reporting(0);
+        ob_start();
+        
+        // Kiểm tra nếu là AJAX request
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+        
+        // Kiểm tra và tạo bảng reviews nếu chưa tồn tại
+        $this->createReviewsTableIfNotExists();
+        
+        try {
+            // Nếu là AJAX request
+            if ($isAjax) {
+                // Xóa bất kỳ output buffer nào
+                ob_end_clean();
+                header('Content-Type: application/json');
+                
+                // Kiểm tra đăng nhập
+                if (!SessionHelper::isLoggedIn()) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Bạn cần đăng nhập để gửi đánh giá.'
+                    ]);
+                    exit;
+                }
+                
+                // Kiểm tra method
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Phương thức không hợp lệ.'
+                    ]);
+                    exit;
+                }
+                
+                // Lấy dữ liệu từ form
+                $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+                $rating = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
+                $content = isset($_POST['content']) ? $_POST['content'] : '';
+                $user_id = SessionHelper::getUserId();
+                
+                // Xử lý tạm thời nếu không có user_id trong session
+                if (empty($user_id) && SessionHelper::isLoggedIn()) {
+                    // Lấy user_id từ database dựa trên username
+                    $user_id = $this->getUserIdByUsername($_SESSION['username']);
+                    // Lưu user_id vào session để sử dụng sau này
+                    if ($user_id) {
+                        $_SESSION['user_id'] = $user_id;
+                    }
+                }
+                
+                // Validate
+                $errors = [];
+                if (empty($product_id)) $errors[] = "Sản phẩm không hợp lệ";
+                if ($rating < 1 || $rating > 5) $errors[] = "Đánh giá phải từ 1-5 sao";
+                if (empty($content)) $errors[] = "Nội dung đánh giá không được để trống";
+                if (empty($user_id)) $errors[] = "Không thể xác định người dùng";
+                
+                if (!empty($errors)) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => implode(', ', $errors)
+                    ]);
+                    exit;
+                }
+                
+                // Kiểm tra user_id có tồn tại trong bảng users không
+                $userExists = $this->checkUserExists($user_id);
+                if (!$userExists) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'ID người dùng không hợp lệ.'
+                    ]);
+                    exit;
+                }
+                
+                // Xử lý upload ảnh
+                $uploadedImages = [];
+                if (isset($_FILES['review_images']) && !empty($_FILES['review_images']['name'][0])) {
+                    $upload_dir = 'uploads/reviews/';
+                    
+                    if (!file_exists($upload_dir)) {
+                        mkdir($upload_dir, 0777, true);
+                    }
+                    
+                    foreach ($_FILES['review_images']['name'] as $key => $name) {
+                        if ($_FILES['review_images']['error'][$key] === 0) {
+                            $tmp_name = $_FILES['review_images']['tmp_name'][$key];
+                            $ext = pathinfo($name, PATHINFO_EXTENSION);
+                            $new_name = uniqid('review_') . '.' . $ext;
+                            $target = $upload_dir . $new_name;
+                            
+                            if (move_uploaded_file($tmp_name, $target)) {
+                                $uploadedImages[] = $target;
+                            }
+                        }
+                    }
+                }
+                
+                // Lưu đánh giá vào database
+                $images = !empty($uploadedImages) ? implode(',', $uploadedImages) : null;
+                
+                try {
+                    $query = "INSERT INTO reviews (product_id, user_id, rating, content, images) 
+                              VALUES (:product_id, :user_id, :rating, :content, :images)";
+                    $stmt = $this->db->prepare($query);
+                    $stmt->bindParam(':product_id', $product_id);
+                    $stmt->bindParam(':user_id', $user_id);
+                    $stmt->bindParam(':rating', $rating);
+                    $stmt->bindParam(':content', $content);
+                    $stmt->bindParam(':images', $images);
+                    
+                    $stmt->execute();
+                    
+                    // Cập nhật rating trung bình của sản phẩm
+                    $this->updateProductRating($product_id);
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'message' => 'Đánh giá của bạn đã được gửi thành công!'
+                    ]);
+                } catch (PDOException $e) {
+                    // Xử lý lỗi PDO riêng biệt
+                    if ($e->getCode() == 23000 && strpos($e->getMessage(), 'foreign key constraint') !== false) {
+                        // Lỗi ràng buộc khóa ngoại
+                        error_log('Lỗi khóa ngoại khi thêm đánh giá: ' . $e->getMessage());
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'Không thể thêm đánh giá do lỗi ràng buộc dữ liệu. Vui lòng đăng nhập lại và thử lại.'
+                        ]);
+                    } else {
+                        error_log('Lỗi khi thêm đánh giá: ' . $e->getMessage());
+                        echo json_encode([
+                            'success' => false,
+                            'message' => 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!'
+                        ]);
+                    }
+                }
+                exit;
+            } else {
+                // Xử lý non-AJAX request
+                ob_end_clean();
+                
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                    header('Location: /');
+                    exit;
+                }
+                
+                if (!SessionHelper::isLoggedIn()) {
+                    header('Location: /User/login');
+                    exit;
+                }
+                
+                $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+                $rating = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
+                $content = isset($_POST['content']) ? $_POST['content'] : '';
+                $user_id = SessionHelper::getUserId();
+                
+                // Xử lý tạm thời nếu không có user_id trong session
+                if (empty($user_id) && SessionHelper::isLoggedIn()) {
+                    // Lấy user_id từ database dựa trên username
+                    $user_id = $this->getUserIdByUsername($_SESSION['username']);
+                    // Lưu user_id vào session để sử dụng sau này
+                    if ($user_id) {
+                        $_SESSION['user_id'] = $user_id;
+                    }
+                }
+                
+                $errors = [];
+                if (empty($product_id)) $errors[] = "Sản phẩm không hợp lệ";
+                if ($rating < 1 || $rating > 5) $errors[] = "Đánh giá phải từ 1-5 sao";
+                if (empty($content)) $errors[] = "Nội dung đánh giá không được để trống";
+                if (empty($user_id)) $errors[] = "Không thể xác định người dùng";
+                
+                if (!empty($errors)) {
+                    $_SESSION['review_errors'] = $errors;
+                    header('Location: /Product/show/' . $product_id);
+                    exit;
+                }
+                
+                // Kiểm tra user_id có tồn tại trong bảng users không
+                $userExists = $this->checkUserExists($user_id);
+                if (!$userExists) {
+                    $_SESSION['review_errors'] = ["ID người dùng không hợp lệ."];
+                    header('Location: /Product/show/' . $product_id);
+                    exit;
+                }
+                
+                // Xử lý upload ảnh
+                $uploadedImages = [];
+                if (isset($_FILES['review_images']) && !empty($_FILES['review_images']['name'][0])) {
+                    $upload_dir = 'uploads/reviews/';
+                    
+                    if (!file_exists($upload_dir)) {
+                        mkdir($upload_dir, 0777, true);
+                    }
+                    
+                    foreach ($_FILES['review_images']['name'] as $key => $name) {
+                        if ($_FILES['review_images']['error'][$key] === 0) {
+                            $tmp_name = $_FILES['review_images']['tmp_name'][$key];
+                            $ext = pathinfo($name, PATHINFO_EXTENSION);
+                            $new_name = uniqid('review_') . '.' . $ext;
+                            $target = $upload_dir . $new_name;
+                            
+                            if (move_uploaded_file($tmp_name, $target)) {
+                                $uploadedImages[] = $target;
+                            }
+                        }
+                    }
+                }
+                
+                // Lưu đánh giá vào database
+                $images = !empty($uploadedImages) ? implode(',', $uploadedImages) : null;
+                
+                try {
+                    $query = "INSERT INTO reviews (product_id, user_id, rating, content, images) 
+                              VALUES (:product_id, :user_id, :rating, :content, :images)";
+                    $stmt = $this->db->prepare($query);
+                    $stmt->bindParam(':product_id', $product_id);
+                    $stmt->bindParam(':user_id', $user_id);
+                    $stmt->bindParam(':rating', $rating);
+                    $stmt->bindParam(':content', $content);
+                    $stmt->bindParam(':images', $images);
+                    
+                    if ($stmt->execute()) {
+                        // Cập nhật rating trung bình của sản phẩm
+                        $this->updateProductRating($product_id);
+                        
+                        $_SESSION['review_result'] = [
+                            'success' => true,
+                            'message' => 'Đánh giá của bạn đã được gửi thành công!'
+                        ];
+                    } else {
+                        $_SESSION['review_result'] = [
+                            'success' => false,
+                            'message' => 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!'
+                        ];
+                    }
+                } catch (PDOException $e) {
+                    // Xử lý lỗi PDO riêng biệt
+                    if ($e->getCode() == 23000 && strpos($e->getMessage(), 'foreign key constraint') !== false) {
+                        // Lỗi ràng buộc khóa ngoại
+                        error_log('Lỗi khóa ngoại khi thêm đánh giá: ' . $e->getMessage());
+                        $_SESSION['review_errors'] = ["Không thể thêm đánh giá do lỗi ràng buộc dữ liệu. Vui lòng đăng nhập lại và thử lại."];
+                    } else {
+                        error_log('Lỗi khi thêm đánh giá: ' . $e->getMessage());
+                        $_SESSION['review_errors'] = [$e->getMessage()];
+                    }
+                }
+                
+                header('Location: /Product/show/' . $product_id);
+                exit;
+            }
+        } catch (Exception $e) {
+            // Xử lý ngoại lệ
+            if ($isAjax) {
+                ob_end_clean();
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                ]);
+            } else {
+                $_SESSION['review_errors'] = [$e->getMessage()];
+                header('Location: /Product/show/' . ($product_id ?? 0));
+            }
+            exit;
+        }
+    }
+    
+    // Hàm kiểm tra sự tồn tại của người dùng
+    private function checkUserExists($user_id) {
+        try {
+            $query = "SELECT 1 FROM users WHERE id = :user_id LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log('Lỗi kiểm tra user: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    // Hàm riêng biệt để kiểm tra và tạo bảng reviews
+    private function createReviewsTableIfNotExists() 
+    {
+        try {
+            $query = "CREATE TABLE IF NOT EXISTS reviews (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                product_id INT(11) NOT NULL,
+                user_id INT(11) NOT NULL,
+                rating INT(1) NOT NULL,
+                content TEXT NOT NULL,
+                images TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY product_id (product_id),
+                KEY user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            
+            $this->db->exec($query);
+            return true;
+        } catch (PDOException $e) {
+            error_log('Lỗi tạo bảng reviews: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    private function updateProductRating($product_id)
+    {
+        // Lấy điểm đánh giá trung bình của sản phẩm
+        $query = "SELECT AVG(rating) as avg_rating, COUNT(id) as count 
+                  FROM reviews 
+                  WHERE product_id = :product_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':product_id', $product_id);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_OBJ);
+        
+        if ($result) {
+            $avg_rating = round($result->avg_rating, 1);
+            $count = $result->count;
+            
+            // Cập nhật rating trong bảng product
+            $updateQuery = "UPDATE product 
+                           SET rating = :rating, rating_count = :count 
+                           WHERE id = :product_id";
+            $updateStmt = $this->db->prepare($updateQuery);
+            $updateStmt->bindParam(':rating', $avg_rating);
+            $updateStmt->bindParam(':count', $count);
+            $updateStmt->bindParam(':product_id', $product_id);
+            $updateStmt->execute();
+        }
+    }
+
+    // Hàm lấy user_id từ username
+    private function getUserIdByUsername($username) {
+        try {
+            $query = "SELECT id FROM users WHERE username = :username LIMIT 1";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_OBJ);
+            return $result ? $result->id : 0;
+        } catch (PDOException $e) {
+            error_log('Lỗi khi lấy user_id từ username: ' . $e->getMessage());
+            return 0;
+        }
     }
 }
 ?>
