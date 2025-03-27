@@ -408,6 +408,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Review') === 0) ? 'active' : ''; ?>" href="/Review">
+                            <i class="fas fa-star"></i>
+                            Đánh giá từ khách hàng
+                        </a>
+                    </li>
+                    <li class="nav-item">
                     <?php if (SessionHelper::isAdmin()): ?>
                         <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
                             <i class="fas fa-plus-circle"></i>
