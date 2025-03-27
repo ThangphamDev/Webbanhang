@@ -52,7 +52,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(135deg, #43a047, #2e7d32);
+            background: var(--primary-gradient);
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             padding: 8px 0;
             z-index: 1000;
@@ -62,7 +62,7 @@
         .custom-navbar.scrolled {
             padding: 6px 0;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-            background: linear-gradient(135deg, #2e7d32, #43a047);
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
         }
 
         .navbar-container {
@@ -117,32 +117,26 @@
         }
 
         .nav-link {
-            color: #ffffff !important;
+            color: var(--white) !important;
             font-weight: 500;
             padding: 6px 10px !important;
             border-radius: 15px;
             font-size: 0.9rem;
             white-space: nowrap;
-            transition: all 0.2s ease;
+            transition: all var(--transition-speed) ease;
             position: relative;
         }
 
         .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #ffffff !important;
+            background-color: var(--hover-bg);
+            color: var(--white) !important;
             transform: translateY(-1px);
         }
 
         .nav-link.active {
-            background-color: #ffffff;
-            color: #2e7d32 !important;
+            background-color: var(--white);
+            color: var(--primary-dark) !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Make sure dropdown toggle is green and white text when active */
-        .nav-link.dropdown-toggle.active {
-            background-color: #ffffff !important;
-            color: #2e7d32 !important;
         }
 
         .nav-link i {
@@ -153,9 +147,9 @@
         /* Search Box */
         .navbar-search-box {
             position: relative;
-            margin: 0 10px;
-            min-width: 160px;
-            max-width: 200px;
+            margin: 0 20px;
+            min-width: 180px;
+            max-width: 220px;
             display: flex;
             align-items: center;
         }
@@ -167,33 +161,33 @@
         }
 
         .navbar-search-input {
-            border-radius: 20px !important;
-            padding: 5px 10px 5px 30px !important;
+            border-radius: 24px !important;
+            padding: 8px 15px 8px 38px !important;
             border: none !important;
-            transition: all var(--transition-speed) !important;
-            font-size: 0.85rem !important;
+            transition: all 0.3s !important;
+            font-size: 0.9rem !important;
             background-color: rgba(255, 255, 255, 0.9) !important;
             width: 100% !important;
-            height: 32px !important;
+            height: 38px !important;
             outline: none !important;
-            box-shadow: none !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
         }
 
         .navbar-search-input:focus {
-            box-shadow: 0 0 0 0.1rem rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15) !important;
             background-color: var(--white) !important;
             border-color: transparent !important;
-            width: 110% !important;
-            max-width: 230px !important;
+            width: 105% !important;
+            max-width: 260px !important;
         }
 
         .navbar-search-icon {
             position: absolute !important;
             top: 50% !important;
-            left: 10px !important;
+            left: 15px !important;
             transform: translateY(-50%) !important;
-            color: var(--text-muted) !important;
-            font-size: 0.8rem !important;
+            color: var(--primary-dark) !important;
+            font-size: 0.9rem !important;
             z-index: 5 !important;
             pointer-events: none !important; /* Để icon không chặn click vào input */
         }
@@ -208,7 +202,7 @@
             top: -3px;
             right: -3px;
             background-color: #ff5722;
-            color: #ffffff;
+            color: var(--white);
             font-size: 0.65rem;
             padding: 2px 5px;
             border-radius: 50%;
@@ -217,8 +211,8 @@
 
         /* User Menu */
         .username-link {
-            color: #2e7d32 !important;
-            background-color: #ffffff;
+            color: var(--primary-dark) !important;
+            background-color: var(--white);
             padding: 5px 10px !important;
             border-radius: 15px;
             font-weight: 600;
@@ -231,7 +225,7 @@
         .username-link:hover, 
         .username-link:focus {
             background-color: rgba(255, 255, 255, 0.9);
-            color: #2e7d32 !important;
+            color: var(--primary-dark) !important;
             transform: translateY(-1px);
         }
 
@@ -241,8 +235,8 @@
         }
 
         .login-button {
-            background-color: #ffffff;
-            color: #2e7d32 !important;
+            background-color: var(--white);
+            color: var(--primary-dark) !important;
             padding: 5px 12px !important;
             border-radius: 15px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -251,21 +245,24 @@
 
         .login-button:hover {
             background-color: rgba(255, 255, 255, 0.9);
-            color: #2e7d32 !important;
+            color: var(--primary-dark) !important;
             transform: translateY(-1px);
         }
 
-        /* Admin Dropdown Menu */
+        /* Header Dropdown Menu */
         .navbar .dropdown-menu {
-            margin-top: 8px;
             border-radius: 8px;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
             border: none;
             padding: 6px 0;
-            background-color: #ffffff;
+            margin-top: 8px;
+            background-color: var(--white);
             animation: slideDown 0.2s ease;
             display: none;
-            z-index: 1001;
+            position: absolute;
+            right: 0;
+            min-width: 200px;
+            z-index: 1000;
         }
 
         .navbar .dropdown-menu.show {
@@ -273,50 +270,34 @@
         }
 
         .navbar .dropdown-item {
-            padding: 8px 15px;
-            color: #333333;
+            padding: 6px 12px;
+            color: var(--text-dark);
             font-size: 0.85rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            background-color: transparent;
+            transition: all var(--transition-speed) ease;
+            display: block;
+            text-decoration: none;
         }
 
         .navbar .dropdown-item i {
-            margin-right: 8px;
-            color: #43a047;
-            font-size: 0.9rem;
-            width: 20px;
+            margin-right: 6px;
+            color: var(--primary-color);
+            width: 16px;
             text-align: center;
         }
 
         .navbar .dropdown-item:hover, 
         .navbar .dropdown-item:focus {
-            background-color: rgba(67, 160, 71, 0.1);
-            color: #2e7d32;
+            background-color: var(--hover-bg);
+            color: var(--primary-dark);
         }
 
-        .navbar .dropdown-item.active {
-            background-color: rgba(67, 160, 71, 0.15);
-            color: #2e7d32;
-            font-weight: 500;
-        }
-
-        .navbar .dropdown-toggle::after {
-            margin-left: 0.4em;
-            vertical-align: 0.15em;
-            color: #ffffff;
-        }
-
-        /* Không hiển thị border khi focus vào dropdown toggle */
-        .nav-link.dropdown-toggle:focus {
-            outline: none;
-            box-shadow: none;
+        .navbar .dropdown-item.text-danger i {
+            color: #dc3545;
         }
 
         .navbar .dropdown-divider {
             margin: 4px 0;
-            border-top-color: #e9ecef;
+            border-top-color: var(--border-color);
         }
 
         @keyframes slideDown {
@@ -350,6 +331,11 @@
                 max-width: 180px;
             }
 
+            .navbar-search-input:focus {
+                width: 100% !important;
+                max-width: 200px !important;
+            }
+
             .navbar-nav {
                 margin-top: 8px;
             }
@@ -376,24 +362,22 @@
             }
 
             .navbar-search-box {
-                min-width: 110px;
-                max-width: 140px;
+                min-width: 120px;
+                max-width: 150px;
             }
 
             .navbar-search-box form {
                 width: 100%;
-                margin: 0;
             }
 
             .navbar-search-input {
                 font-size: 0.8rem !important;
-                padding: 5px 8px 5px 25px !important;
-                height: 30px !important;
+                padding: 5px 8px 5px 30px !important;
             }
 
             .navbar-search-icon {
-                font-size: 0.7rem !important;
-                left: 8px !important;
+                font-size: 0.8rem !important;
+                left: 10px !important;
             }
         }
     </style>
@@ -423,32 +407,29 @@
                             Danh sách sản phẩm
                         </a>
                     </li>
+                    <li class="nav-item">
                     <?php if (SessionHelper::isAdmin()): ?>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0 || strpos($_SERVER['REQUEST_URI'], '/Category') === 0 || strpos($_SERVER['REQUEST_URI'], '/Review') === 0) ? 'active' : ''; ?>" href="#" id="adminDropdown" role="button" aria-haspopup="true" aria-expanded="false" style="background-color: transparent; color: #ffffff !important;">
-                            <i class="fas fa-cogs"></i>
-                            Quản lý
+                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
+                            <i class="fas fa-plus-circle"></i>
+                            Thêm sản phẩm
                         </a>
-                        <div class="dropdown-menu" aria-labelledby="adminDropdown">
-                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
-                                <i class="fas fa-plus-circle"></i> Thêm sản phẩm
-                            </a>
-                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Category') === 0) ? 'active' : ''; ?>" href="/Category">
-                                <i class="fas fa-tags"></i> Danh mục
-                            </a>
-                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Review') === 0) ? 'active' : ''; ?>" href="/Review">
-                                <i class="fas fa-star"></i> Đánh giá từ khách hàng
-                            </a>
-                        </div>
+                        <?php endif; ?>
                     </li>
+                    <li class="nav-item">
+                    <?php if (SessionHelper::isAdmin()): ?>
+                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Category') === 0) ? 'active' : ''; ?>" href="/Category">
+                            <i class="fas fa-tags"></i>
+                            Danh mục
+                        </a>
                     <?php endif; ?>
+                    </li>
                 </ul>
 
                 <!-- Search Box -->
                 <div class="navbar-search-box">
                     <form action="/Product/search" method="GET" id="searchForm">
                         <i class="fas fa-search navbar-search-icon"></i>
-                        <input type="text" name="keyword" class="navbar-search-input" placeholder="Tìm kiếm..." id="searchInput" value="<?php echo isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : ''; ?>">
+                        <input type="text" name="keyword" class="form-control navbar-search-input" placeholder="Tìm kiếm sản phẩm..." id="searchInput" value="<?php echo isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : ''; ?>">
                     </form>
                 </div>
 
@@ -534,36 +515,6 @@
                         });
                     }
                 });
-            }
-
-            // Xử lý dropdown admin
-            const adminDropdown = document.getElementById('adminDropdown');
-            if (adminDropdown) {
-                adminDropdown.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation(); // Ngăn sự kiện lan truyền
-                    const dropdownMenu = this.nextElementSibling;
-                    dropdownMenu.classList.toggle('show');
-                    
-                    // Đóng dropdown khi click bên ngoài
-                    document.addEventListener('click', function closeDropdown(event) {
-                        if (!adminDropdown.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                            dropdownMenu.classList.remove('show');
-                            document.removeEventListener('click', closeDropdown);
-                        }
-                    });
-                });
-                
-                // Ngăn chặn việc đóng dropdown khi click vào các item bên trong
-                const dropdownMenu = adminDropdown.nextElementSibling;
-                if (dropdownMenu) {
-                    const dropdownItems = dropdownMenu.querySelectorAll('.dropdown-item');
-                    dropdownItems.forEach(item => {
-                        item.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                        });
-                    });
-                }
             }
 
             // Định nghĩa các hàm cần thiết cho AJAX search nếu đang ở trang danh sách sản phẩm
