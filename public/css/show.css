@@ -186,17 +186,23 @@
 }
 
 .product-status {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-left: 15px;
 }
 
 .product-status.in-stock {
-    color: #43a047;
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.product-status.in-stock i {
+    margin-right: 5px;
 }
 
 .product-status.out-stock {

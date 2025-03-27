@@ -94,12 +94,8 @@
                     <?php endif; ?>
                 </div>
                 
-                <div class="product-status <?php echo isset($product->quantity) && $product->quantity > 0 ? 'in-stock' : 'out-stock'; ?>">
-                    <?php if (isset($product->quantity) && $product->quantity > 0): ?>
-                        <i class="fas fa-check-circle"></i> Còn hàng
-                    <?php else: ?>
-                        <i class="fas fa-times-circle"></i> Hết hàng
-                    <?php endif; ?>
+                <div class="product-status in-stock">
+                    <i class="fas fa-check-circle"></i> Còn hàng
                 </div>
             </div>
             
@@ -111,12 +107,12 @@
             
             <div class="product-actions">
                 <div class="quantity-selector">
-                    <button class="qty-btn minus">
+                    <button type="button" class="qty-btn minus">
                         <i class="fas fa-minus"></i>
                     </button>
                     <input type="number" name="quantity" id="quantity" value="1" min="1" 
-                           max="<?php echo isset($product->quantity) ? $product->quantity : 1; ?>">
-                    <button class="qty-btn plus">
+                           max="<?php echo isset($product->quantity) ? $product->quantity : 99; ?>">
+                    <button type="button" class="qty-btn plus">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
@@ -467,19 +463,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const quantityInput = document.getElementById('quantity');
     const minusBtn = document.querySelector('.qty-btn.minus');
     const plusBtn = document.querySelector('.qty-btn.plus');
-    const maxQuantity = parseInt(quantityInput.getAttribute('max'));
+    const maxQuantity = parseInt(quantityInput.getAttribute('max')) || 99;
     
-    minusBtn.addEventListener('click', function() {
+    minusBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Ngăn hành vi mặc định của button
         let value = parseInt(quantityInput.value);
-        if (value > 1) {
+        if (isNaN(value) || value <= 1) {
+            quantityInput.value = 1;
+        } else {
             quantityInput.value = value - 1;
         }
+        // Kích hoạt sự kiện change để đảm bảo giá trị mới được lưu
+        quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
     });
     
-    plusBtn.addEventListener('click', function() {
+    plusBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Ngăn hành vi mặc định của button
         let value = parseInt(quantityInput.value);
-        if (value < maxQuantity) {
+        if (isNaN(value)) {
+            quantityInput.value = 1;
+        } else if (value < maxQuantity) {
             quantityInput.value = value + 1;
+        } else {
+            quantityInput.value = maxQuantity;
+        }
+        // Kích hoạt sự kiện change để đảm bảo giá trị mới được lưu
+        quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    
+    // Xử lý khi người dùng nhập trực tiếp vào input
+    quantityInput.addEventListener('change', function() {
+        let value = parseInt(this.value);
+        if (isNaN(value) || value < 1) {
+            this.value = 1;
+        } else if (value > maxQuantity) {
+            this.value = maxQuantity;
+        }
+        // Đảm bảo giá trị là số nguyên
+        this.value = parseInt(this.value);
+    });
+    
+    // Ngăn chặn hành vi mặc định cho input số lượng khi nhấn phím up/down
+    quantityInput.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const step = e.key === 'ArrowUp' ? 1 : -1;
+            const newValue = parseInt(this.value) + step;
+            if (newValue >= 1 && newValue <= maxQuantity) {
+                this.value = newValue;
+                this.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         }
     });
     

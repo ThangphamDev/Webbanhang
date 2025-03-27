@@ -509,9 +509,22 @@ class ProductController
     } 
  
     public function checkout() 
-    { 
-        include 'app/views/product/checkout.php'; 
-    } 
+    {
+        // Lấy giỏ hàng từ session
+        $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+        
+        // Tính tổng tiền
+        $total = $this->calculateCartTotal($cart);
+        
+        // Nếu giỏ hàng trống, chuyển hướng về trang giỏ hàng
+        if (empty($cart)) {
+            header('Location: /Product/cart');
+            exit;
+        }
+        
+        // Truyền biến vào view
+        include 'app/views/product/checkout.php';
+    }
  
     public function processCheckout() 
     { 
@@ -519,6 +532,8 @@ class ProductController
             $name = $_POST['name']; 
             $phone = $_POST['phone']; 
             $address = $_POST['address']; 
+            $note = isset($_POST['note']) ? $_POST['note'] : '';
+            $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : 'cod';
  
             if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) { 
                 echo "Giỏ hàng trống."; 
@@ -528,11 +543,13 @@ class ProductController
             $this->db->beginTransaction(); 
  
             try { 
-                $query = "INSERT INTO orders (name, phone, address) VALUES (:name, :phone, :address)"; 
+                $query = "INSERT INTO orders (name, phone, address, note, payment_method) VALUES (:name, :phone, :address, :note, :payment_method)"; 
                 $stmt = $this->db->prepare($query); 
                 $stmt->bindParam(':name', $name); 
                 $stmt->bindParam(':phone', $phone); 
                 $stmt->bindParam(':address', $address); 
+                $stmt->bindParam(':note', $note);
+                $stmt->bindParam(':payment_method', $payment_method);
                 $stmt->execute(); 
                 $order_id = $this->db->lastInsertId(); 
  
