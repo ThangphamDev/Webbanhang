@@ -832,8 +832,10 @@
                     
                     <div class="pagination">
                         <?php if (isset($pagination) && $pagination['total_pages'] > 0): ?>
+
                             <a href="?page=<?php echo max(1, $pagination['current_page'] - 1); ?>" 
                                class="page-item prev <?php echo $pagination['current_page'] <= 1 ? 'disabled' : ''; ?>"
+
                                data-page="<?php echo max(1, $pagination['current_page'] - 1); ?>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
@@ -848,9 +850,11 @@
                                 $show_dots = ($i == $pagination['current_page'] - 2 && $i > 1) || 
                                              ($i == $pagination['current_page'] + 2 && $i < $pagination['total_pages']);
                                 
+
                                 if ($show_page): ?>
                                     <a href="?page=<?php echo $i; ?>" 
                                        class="page-item <?php echo $i == $pagination['current_page'] ? 'active' : ''; ?>"
+
                                        data-page="<?php echo $i; ?>">
                                         <?php echo $i; ?>
                                     </a>
@@ -859,6 +863,7 @@
                                 <?php endif; ?>
                             <?php endfor; ?>
                             
+
                             <a href="?page=<?php echo min($pagination['total_pages'], $pagination['current_page'] + 1); ?>" 
                                class="page-item next <?php echo $pagination['current_page'] >= $pagination['total_pages'] ? 'disabled' : ''; ?>"
                                data-page="<?php echo min($pagination['total_pages'], $pagination['current_page'] + 1); ?>">
@@ -872,6 +877,7 @@
                             <a href="#" class="page-item next disabled">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
+
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
@@ -925,7 +931,9 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
                     scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error searching products:', error));
             }
@@ -943,7 +951,9 @@ function handleSearch() {
             urlParams.set('page', 1); // Reset về trang 1 khi tìm kiếm
             
             if (keyword.length >= 2) {
+
                 urlParams.set('keyword', keyword);
+
                 fetch(`/Product/search?${urlParams.toString()}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -953,12 +963,16 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
                     scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error searching products:', error));
             } else {
                 // Nếu từ khóa quá ngắn, hiển thị tất cả sản phẩm
+
                 urlParams.delete('keyword');
+
                 fetch(`/Product/search?${urlParams.toString()}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -968,7 +982,9 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
                     scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error fetching products:', error));
             }
@@ -1017,6 +1033,7 @@ function handleSort() {
             urlParams.set('sort', sortValue);
             urlParams.set('page', 1); // Reset về trang 1 khi sắp xếp
             
+
             fetch(`/Product/sort?${urlParams.toString()}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1030,6 +1047,120 @@ function handleSort() {
                 scrollToBreadcrumb();
             })
             .catch(error => console.error('Error sorting products:', error));
+        });
+    });
+}
+
+function updatePagination(pagination) {
+    const paginationContainer = document.querySelector('.pagination');
+    if (!paginationContainer || !pagination) return;
+
+    let paginationHTML = '';
+    
+    // Nút Previous
+    paginationHTML += `
+        <a href="#" class="page-item prev ${pagination.current_page <= 1 ? 'disabled' : ''}" 
+           data-page="${Math.max(1, pagination.current_page - 1)}">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    `;
+    
+    // Số trang
+    for (let i = 1; i <= pagination.total_pages; i++) {
+        // Hiển thị trang đầu, trang cuối và các trang xung quanh trang hiện tại
+        const showPage = i === 1 || i === pagination.total_pages || 
+                         Math.abs(i - pagination.current_page) <= 1;
+        
+        // Hiển thị dấu "..." nếu cần
+        const showDots = (i === pagination.current_page - 2 && i > 1) || 
+                         (i === pagination.current_page + 2 && i < pagination.total_pages);
+        
+        if (showPage) {
+            paginationHTML += `
+                <a href="#" class="page-item ${i === pagination.current_page ? 'active' : ''}" 
+                   data-page="${i}">${i}</a>
+            `;
+        } else if (showDots) {
+            paginationHTML += '<span class="page-dots">...</span>';
+        }
+    }
+    
+    // Nút Next
+    paginationHTML += `
+        <a href="#" class="page-item next ${pagination.current_page >= pagination.total_pages ? 'disabled' : ''}" 
+           data-page="${Math.min(pagination.total_pages, pagination.current_page + 1)}">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+    
+    // Thêm event listeners cho các nút phân trang
+    document.querySelectorAll('.pagination .page-item:not(.disabled)').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (this.classList.contains('disabled')) return;
+            
+            const page = parseInt(this.getAttribute('data-page'));
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Giữ lại tất cả tham số hiện tại và chỉ cập nhật trang
+            urlParams.set('page', page);
+            
+            // Cập nhật URL không reload trang
+            window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+            
+            // Lấy các tham số lọc hiện tại
+            const currentFilters = {
+                category: urlParams.get('category'),
+                min_price: urlParams.get('min_price'),
+                max_price: urlParams.get('max_price'),
+                rating: urlParams.get('rating'),
+                keyword: urlParams.get('keyword'),
+                sort: urlParams.get('sort')
+            };
+            
+            // Xác định API endpoint dựa vào lọc hiện tại
+            let endpoint = '/Product/filter';
+            if (currentFilters.keyword) {
+                endpoint = '/Product/search';
+            } else if (currentFilters.sort && !currentFilters.category && !currentFilters.min_price && !currentFilters.max_price && !currentFilters.rating) {
+                endpoint = '/Product/sort';
+            }
+            
+            // Gọi API với tất cả tham số hiện tại
+            fetch(`${endpoint}?${urlParams.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateProductGrid(data.products);
+                updatePagination(data.pagination);
+                
+                // Cập nhật số lượng sản phẩm trong các danh mục
+                if (data.categories) {
+                    data.categories.forEach(category => {
+                        const countElement = document.querySelector(`input[value="${category.id}"]`)
+                            ?.closest('.filter-option')
+                            ?.querySelector('.option-count');
+                        if (countElement) {
+                            countElement.textContent = `(${category.product_count})`;
+                        }
+                    });
+                }
+                
+                // Cuộn đến phần breadcrumb
+                const breadcrumb = document.querySelector('.breadcrumb');
+                if (breadcrumb) {
+                    window.scrollTo({
+                        top: breadcrumb.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching products:', error));
         });
     });
 }
@@ -1250,12 +1381,14 @@ function updatePagination(pagination) {
 
 async function applyFilters() {
     const urlParams = new URLSearchParams(window.location.search);
+
     const category = document.querySelector('.category-select').value;
     const rating = document.querySelector('.rating-select').value;
     
     // Lấy giá trị min_price và max_price từ URL nếu đã có
     const minPrice = urlParams.get('min_price');
     const maxPrice = urlParams.get('max_price');
+
     
     // Giữ lại tham số sort nếu có
     const sort = urlParams.get('sort');
@@ -1266,8 +1399,10 @@ async function applyFilters() {
     }
     
     // Thêm lại các tham số lọc
+
     if (category && category !== 'all') {
         urlParams.set('category', category);
+
     }
     
     if (rating) urlParams.set('rating', rating);
@@ -1282,6 +1417,7 @@ async function applyFilters() {
     window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 
     try {
+
         const endpoint = '/Product/filter';
         
         const response = await fetch(`${endpoint}?${urlParams.toString()}`, {
@@ -1295,6 +1431,7 @@ async function applyFilters() {
         
         // Cập nhật số lượng sản phẩm cho mỗi danh mục
         if (data.categories) {
+
             // Cập nhật tùy chọn trong dropdown danh mục
             const categorySelect = document.querySelector('.category-select');
             if (categorySelect) {
@@ -1312,10 +1449,21 @@ async function applyFilters() {
         
         // Cuộn đến phần breadcrumb
         scrollToBreadcrumb();
+
     } catch (error) {
         console.error('Error applying filters:', error);
+        
+        // Cuộn đến phần breadcrumb
+        const breadcrumb = document.querySelector('.breadcrumb');
+        if (breadcrumb) {
+            window.scrollTo({
+                top: breadcrumb.offsetTop - 20,
+                behavior: 'smooth'
+            });
+        }
     }
 }
+
 
 function handleCategorySelectChange(select) {
     const selectedValue = select.value;
@@ -1325,6 +1473,7 @@ function handleCategorySelectChange(select) {
         urlParams.set('category', selectedValue);
     } else {
         urlParams.delete('category');
+
     }
     
     urlParams.set('page', 1);
@@ -1332,6 +1481,7 @@ function handleCategorySelectChange(select) {
     
     applyFilters();
 }
+
 
 function handleRatingSelectChange(select) {
     const selectedValue = select.value;
@@ -1341,6 +1491,7 @@ function handleRatingSelectChange(select) {
         urlParams.set('rating', selectedValue);
     } else {
         urlParams.delete('rating');
+
     }
     
     urlParams.set('page', 1);
@@ -1348,6 +1499,7 @@ function handleRatingSelectChange(select) {
     
     applyFilters();
 }
+
 
 function handlePriceSelectChange(select) {
     const selectedValue = select.value;
@@ -1371,6 +1523,7 @@ function handlePriceSelectChange(select) {
 function clearAllFilters() {
     // Reset dropdown danh mục về "Tất cả"
     document.querySelector('.category-select').value = 'all';
+
     
     // Reset dropdown giá về "Tất cả"
     document.querySelector('.price-select').value = '';
@@ -1430,6 +1583,7 @@ function updateCartCount(count) {
         }
     });
 }
+
 
 // Cập nhật hàm handleAddToCart
 function handleAddToCart() {
@@ -1505,19 +1659,23 @@ function showNotification(type, message) {
     }, 3000);
 }
 
+
 // Khởi tạo khi trang đã tải xong
 document.addEventListener('DOMContentLoaded', function() {
+
     // Khởi tạo các chức năng
     handleSearch();
     handleSort();
     handleViewToggle();
     handleAddToCart();
+
     
     // Khởi tạo phân trang nếu cần
     const paginationData = <?php echo isset($pagination) ? json_encode($pagination) : 'null'; ?>;
     if (paginationData) {
         updatePagination(paginationData);
     }
+
     
     // Đảm bảo số lượng sản phẩm trong danh mục được hiển thị đúng khi tải trang
     if (document.querySelector('.category-select').value === 'all') {
@@ -1539,6 +1697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             z-index: 1000;
             transition: transform 0.3s ease;
         }
+
         
         .notification.show {
             transform: translateX(-320px);

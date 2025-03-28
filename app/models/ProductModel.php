@@ -53,6 +53,15 @@ class ProductModel
             $query .= " AND p.rating >= :rating";
             $params[':rating'] = $rating;
         }
+
+        $query .= " ORDER BY p.id ASC";
+        
+        if ($page > 0 && $per_page > 0) {
+            $offset = ($page - 1) * $per_page;
+            $query .= " LIMIT :limit OFFSET :offset";
+            $params[':limit'] = (int)$per_page;
+            $params[':offset'] = (int)$offset;
+        }
         
         // Thêm phân trang
         $query .= " LIMIT :offset, :per_page";
@@ -62,7 +71,9 @@ class ProductModel
         $stmt = $this->conn->prepare($query);
         
         foreach ($params as $key => $value) {
+
             if ($key == ':offset' || $key == ':per_page') {
+
                 $stmt->bindValue($key, $value, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $value);
