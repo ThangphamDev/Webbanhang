@@ -9,13 +9,16 @@ class ProductModel
         $this->conn = $db; 
     } 
  
-    public function getProducts() 
+    public function getProducts($page = 1, $per_page = 12) 
     { 
-        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as 
-category_name 
+        $offset = ($page - 1) * $per_page;
+        $query = "SELECT p.id, p.name, p.description, p.price, p.image, c.name as category_name 
                   FROM " . $this->table_name . " p 
-                  LEFT JOIN category c ON p.category_id = c.id"; 
+                  LEFT JOIN category c ON p.category_id = c.id
+                  LIMIT :offset, :per_page"; 
         $stmt = $this->conn->prepare($query); 
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
         $stmt->execute(); 
         $result = $stmt->fetchAll(PDO::FETCH_OBJ); 
         return $result; 
@@ -60,10 +63,17 @@ category_name
             $params[':offset'] = (int)$offset;
         }
         
+        // Thêm phân trang
+        $query .= " LIMIT :offset, :per_page";
+        $params[':offset'] = $offset;
+        $params[':per_page'] = $per_page;
+        
         $stmt = $this->conn->prepare($query);
         
         foreach ($params as $key => $value) {
-            if ($key == ':limit' || $key == ':offset') {
+
+            if ($key == ':offset' || $key == ':per_page') {
+
                 $stmt->bindValue($key, $value, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue($key, $value);
@@ -202,23 +212,28 @@ public function getPriceRange()
     return $stmt->fetch(PDO::FETCH_OBJ);
 }
 
-public function searchProducts($keyword) 
+public function searchProducts($keyword, $page = 1, $per_page = 12) 
 {
+    $offset = ($page - 1) * $per_page;
     $query = "SELECT p.*, c.name as category_name 
               FROM " . $this->table_name . " p 
               LEFT JOIN category c ON p.category_id = c.id
-              WHERE p.name LIKE :keyword OR p.description LIKE :keyword";
+              WHERE p.name LIKE :keyword OR p.description LIKE :keyword
+              LIMIT :offset, :per_page";
     
     $stmt = $this->conn->prepare($query);
     $keyword = "%{$keyword}%";
     $stmt->bindParam(':keyword', $keyword);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
     $stmt->execute();
     
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-public function sortProducts($sortBy = 'popular') 
+public function sortProducts($sortBy = 'popular', $page = 1, $per_page = 12) 
 {
+    $offset = ($page - 1) * $per_page;
     $query = "SELECT p.*, c.name as category_name 
               FROM " . $this->table_name . " p 
               LEFT JOIN category c ON p.category_id = c.id";
@@ -233,15 +248,140 @@ public function sortProducts($sortBy = 'popular')
         case 'newest':
             $query .= " ORDER BY p.id DESC";
             break;
+        case 'oldest':
+            $query .= " ORDER BY p.id ASC";
+            break;
         case 'popular':
         default:
             $query .= " ORDER BY p.id ASC";
             break;
     }
     
+    $query .= " LIMIT :offset, :per_page";
+    
     $stmt = $this->conn->prepare($query);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':per_page', $per_page, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function getTotalSearchResults($keyword)
+{
+    $query = "SELECT COUNT(*) as count 
+              FROM " . $this->table_name . " p 
+              WHERE p.name LIKE :keyword OR p.description LIKE :keyword";
+    
+    $stmt = $this->conn->prepare($query);
+    $keyword = "%{$keyword}%";
+    $stmt->bindParam(':keyword', $keyword);
+    $stmt->execute();
+    
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
+}
+
+public function getTotalFilteredProducts($category_id = null, $min_price = 0, $max_price = null, $rating = null)
+{
+    $query = "SELECT COUNT(*) as count 
+              FROM " . $this->table_name . " p 
+              WHERE 1=1";
+    
+    $params = [];
+    
+    if ($category_id !== null && $category_id !== 'all') {
+        $query .= " AND p.category_id = :category_id";
+        $params[':category_id'] = $category_id;
+    }
+    
+    if ($min_price !== null) {
+        $query .= " AND p.price >= :min_price";
+        $params[':min_price'] = $min_price;
+    }
+    
+    if ($max_price !== null) {
+        $query .= " AND p.price <= :max_price";
+        $params[':max_price'] = $max_price;
+    }
+    
+    if ($rating !== null) {
+        $query .= " AND p.rating >= :rating";
+        $params[':rating'] = $rating;
+    }
+    
+    $stmt = $this->conn->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
+}
+
+public function getTotalProducts() 
+{
+    $query = "SELECT COUNT(*) as count FROM " . $this->table_name;
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    return $result->count;
+}
+
+public function getProductReviews($productId) {
+    $sql = "SELECT r.*, u.name as user_name 
+            FROM reviews r 
+            JOIN users u ON r.user_id = u.id 
+            WHERE r.product_id = :product_id 
+            ORDER BY r.created_at DESC";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function getRelatedProducts($productId, $categoryId, $limit = 4) {
+    $sql = "SELECT * FROM product 
+            WHERE category_id = :category_id 
+            AND id != :product_id 
+            ORDER BY RAND() 
+            LIMIT :limit";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':category_id', $categoryId);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function updateProductRating($productId) {
+    // Tính toán rating trung bình
+    $sql = "SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count 
+            FROM reviews 
+            WHERE product_id = :product_id";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->execute();
+    
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    
+    // Cập nhật rating của sản phẩm
+    $sql = "UPDATE product 
+            SET rating = :rating, rating_count = :rating_count 
+            WHERE id = :product_id";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':rating', $result->avg_rating);
+    $stmt->bindParam(':rating_count', $result->rating_count);
+    $stmt->bindParam(':product_id', $productId);
+    
+    return $stmt->execute();
 }
 } 
 ?>

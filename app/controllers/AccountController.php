@@ -1,14 +1,20 @@
 <?php
 require_once 'app/config/database.php';
 require_once 'app/models/AccountModel.php';
+require_once 'app/models/UserModel.php';
+require_once 'app/helpers/SessionHelper.php';
+require_once 'app/controllers/Controller.php';
 
-class AccountController {
+class AccountController extends Controller {
     private $accountModel;
+    private $userModel;
     private $db;
 
     public function __construct() {
+        parent::__construct();
         $this->db = (new Database())->getConnection();
         $this->accountModel = new AccountModel($this->db);
+        $this->userModel = new UserModel($this->db);
     }
 
     public function register() {
@@ -65,6 +71,7 @@ class AccountController {
     public function logout() {
         unset($_SESSION['username']);
         unset($_SESSION['role']);
+        unset($_SESSION['user_id']);
         header('Location: /Product/');
         exit();
     }
@@ -94,6 +101,7 @@ class AccountController {
                 if (password_verify($password, $pwd_hashed)) {
                     $_SESSION['username'] = $account->username;
                     $_SESSION['role'] = $account->role;
+                    $_SESSION['user_id'] = $account->id;
                     header('Location: /Product/');
                     exit();
                 } else {

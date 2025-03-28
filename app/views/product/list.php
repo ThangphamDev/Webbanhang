@@ -333,6 +333,251 @@
     .view-toggle button i {
         font-size: 1rem;
     }
+
+    /* CSS cho thanh trượt giá cải tiến */
+    .price-range {
+        padding: 5px 0 20px;
+    }
+    
+    .range-slider {
+        position: relative;
+        width: 100%;
+        height: 30px;
+        margin-bottom: 15px;
+    }
+    
+    .range-track {
+        position: absolute;
+        width: 100%;
+        height: 4px;
+        background-color: #e0e0e0;
+        border-radius: 2px;
+        top: 13px;
+    }
+    
+    .range-selection {
+        position: absolute;
+        height: 4px;
+        background-color: #4CAF50;
+        border-radius: 2px;
+        top: 13px;
+    }
+    
+    .range-min, .range-max {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        background: transparent;
+        position: absolute;
+        top: 13px;
+        pointer-events: none;
+    }
+    
+    .range-min::-webkit-slider-thumb, .range-max::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+        margin-top: -7px;
+        pointer-events: auto;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .range-min::-moz-range-thumb, .range-max::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #4CAF50;
+        cursor: pointer;
+        pointer-events: auto;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .range-min:hover::-webkit-slider-thumb, .range-max:hover::-webkit-slider-thumb,
+    .range-min:active::-webkit-slider-thumb, .range-max:active::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        margin-top: -9px;
+        background: #3d8b40;
+    }
+    
+    .range-min:hover::-moz-range-thumb, .range-max:hover::-moz-range-thumb,
+    .range-min:active::-moz-range-thumb, .range-max:active::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        background: #3d8b40;
+    }
+    
+    .range-min::-webkit-slider-runnable-track, .range-max::-webkit-slider-runnable-track,
+    .range-min::-moz-range-track, .range-max::-moz-range-track {
+        cursor: pointer;
+        background: transparent;
+        border: none;
+    }
+    
+    .range-values {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+    
+    #price-min-value, #price-max-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        background: #f5f5f5;
+        padding: 5px 10px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+    
+    #price-min-value:hover, #price-max-value:hover {
+        background: #e9e9e9;
+    }
+
+    /* CSS cho dropdown filter giá */
+    .price-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .price-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .price-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .price-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .price-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
+
+    /* CSS cho dropdown filter danh mục */
+    .category-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .category-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .category-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .category-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .category-filter-dropdown .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .category-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
+
+    /* CSS cho dropdown filter đánh giá */
+    .rating-filter-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    
+    .rating-select {
+        appearance: none;
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .rating-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .rating-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+    }
+    
+    .rating-filter-dropdown .dropdown-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+    
+    .rating-filter-dropdown:hover .dropdown-icon {
+        color: var(--primary-color);
+    }
+    
+    /* Hiển thị sao vàng trong option */
+    .rating-select option i, .rating-select option .fa-star {
+        color: #FFCC00;
+    }
 </style>
 <!-- Banner quảng cáo hiện đại -->
 <div class="hero-banner">
@@ -411,62 +656,56 @@
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Danh mục</h4>
-                    <div class="filter-options">
-                        <label class="filter-option">
-                            <input type="checkbox" value="all" name="category" 
-                                   <?php echo (!isset($_GET['category']) || $_GET['category'] === 'all') ? 'checked' : ''; ?>
-                                   onchange="handleCategoryChange(this)">
-                            <span class="checkmark"></span>
-                            <span class="option-name">Tất cả</span>
-                        </label>
-                        <?php foreach ($categories as $category): ?>
-                        <label class="filter-option">
-                            <input type="checkbox" value="<?php echo $category->id; ?>" name="category"
-                                   <?php echo (isset($_GET['category']) && $_GET['category'] == $category->id) ? 'checked' : ''; ?>
-                                   onchange="handleCategoryChange(this)">
-                            <span class="checkmark"></span>
-                            <span class="option-name"><?php echo htmlspecialchars($category->name); ?></span>
-                            <span class="option-count"><?php echo $category->product_count ?? 0; ?></span>
-                        </label>
-                        <?php endforeach; ?>
+                    <div class="category-filter-dropdown">
+                        <select class="category-select" onchange="handleCategorySelectChange(this)">
+                            <option value="all" <?php echo (!isset($_GET['category']) || $_GET['category'] === 'all') ? 'selected' : ''; ?>>Tất cả</option>
+                            <?php foreach ($categories as $category): ?>
+                            <option value="<?php echo $category->id; ?>" <?php echo (isset($_GET['category']) && $_GET['category'] == $category->id) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($category->name); ?> (<?php echo $category->product_count ?? 0; ?>)
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Giá</h4>
-                    <div class="price-range">
-                        <div class="range-slider">
-                            <input type="range" id="price-min" class="range-min" min="<?php echo $min_product_price; ?>" 
-                                   max="<?php echo $max_product_price; ?>" value="<?php echo $min_price ?? $min_product_price; ?>">
-                            <input type="range" id="price-max" class="range-max" min="<?php echo $min_product_price; ?>" 
-                                   max="<?php echo $max_product_price; ?>" value="<?php echo $max_price ?? $max_product_price; ?>">
-                            <div class="range-track">
-                                <div class="range-selection"></div>
-                            </div>
-                        </div>
-                        <div class="range-values">
-                            <span id="price-min-value"><?php echo number_format($min_price ?? $min_product_price, 0, ',', '.'); ?>₫</span>
-                            <span id="price-max-value"><?php echo number_format($max_price ?? $max_product_price, 0, ',', '.'); ?>₫</span>
-                        </div>
+                    <div class="price-filter-dropdown">
+                        <select class="price-select" onchange="handlePriceSelectChange(this)">
+                            <option value="" <?php echo (!isset($_GET['min_price']) && !isset($_GET['max_price'])) ? 'selected' : ''; ?>>Tất cả</option>
+                            <option value="0-500000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '0' && isset($_GET['max_price']) && $_GET['max_price'] == '500000') ? 'selected' : ''; ?>>Dưới 500K</option>
+                            <option value="500000-1000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '500000' && isset($_GET['max_price']) && $_GET['max_price'] == '1000000') ? 'selected' : ''; ?>>500K - 1Tr</option>
+                            <option value="1000000-10000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '1000000' && isset($_GET['max_price']) && $_GET['max_price'] == '10000000') ? 'selected' : ''; ?>>1Tr - 10Tr</option>
+                            <option value="10000000-100000000" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '10000000' && isset($_GET['max_price']) && $_GET['max_price'] == '100000000') ? 'selected' : ''; ?>>10Tr - 100Tr</option>
+                            <option value="100000000-999999999" <?php echo (isset($_GET['min_price']) && $_GET['min_price'] == '100000000') ? 'selected' : ''; ?>>Trên 100Tr</option>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
                 <div class="filter-group">
                     <h4 class="filter-title">Đánh giá</h4>
-                    <div class="filter-options">
-                        <?php for($i = 5; $i >= 1; $i--): ?>
-                        <label class="filter-option">
-                            <input type="checkbox" value="<?php echo $i; ?>" name="rating"
-                                   <?php echo (isset($_GET['rating']) && $_GET['rating'] == $i) ? 'checked' : ''; ?>
-                                   onchange="handleRatingChange(this)">
-                            <span class="checkmark"></span>
-                            <div class="star-rating">
-                                <?php for($j = 1; $j <= 5; $j++): ?>
-                                    <i class="fas fa-star <?php echo $j <= $i ? 'active' : ''; ?>"></i>
+                    <div class="rating-filter-dropdown">
+                        <select class="rating-select" onchange="handleRatingSelectChange(this)">
+                            <option value="" <?php echo (!isset($_GET['rating'])) ? 'selected' : ''; ?>>Tất cả đánh giá</option>
+                            <?php for($i = 5; $i >= 1; $i--): ?>
+                            <option value="<?php echo $i; ?>" <?php echo (isset($_GET['rating']) && $_GET['rating'] == $i) ? 'selected' : ''; ?>>
+                                <?php 
+                                // Hiển thị số sao bằng nhiều icon sao
+                                for($j = 1; $j <= $i; $j++): ?>
+                                ★
                                 <?php endfor; ?>
-                            </div>
-                        </label>
-                        <?php endfor; ?>
+                                <?php 
+                                // Hiển thị sao trống cho phần còn lại
+                                for($j = $i+1; $j <= 5; $j++): ?>
+                                ☆
+                                <?php endfor; ?>
+                                trở lên
+                            </option>
+                            <?php endfor; ?>
+                        </select>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
                     </div>
                 </div>
                 
@@ -541,17 +780,32 @@
                                     
                                     <div class="product-rating">
                                         <div class="stars">
-                                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                <i class="fas fa-star <?php echo $i <= $product->rating ? 'active' : ''; ?>"></i>
+                                            <?php 
+                                            // Đảm bảo rating là số hợp lệ
+                                            $rating = isset($product->rating) ? floatval($product->rating) : 0;
+                                            // Hiển thị 5 sao với class active cho những sao đạt rating
+                                            for ($i = 1; $i <= 5; $i++): 
+                                            ?>
+                                                <i class="fas fa-star <?php echo ($i <= $rating) ? 'active' : ''; ?>"></i>
                                             <?php endfor; ?>
                                         </div>
                                         <span class="rating-count">(<?php echo $product->rating_count ?? 0; ?>)</span>
                                     </div>
                                     
                                     <div class="product-price">
-                                        <span class="current-price"><?php echo number_format($product->price, 0, ',', '.'); ?> ₫</span>
-                                        <?php if (!empty($product->old_price)): ?>
-                                            <span class="old-price"><?php echo number_format($product->old_price, 0, ',', '.'); ?> ₫</span>
+                                        <span class="current-price"><?php echo number_format($product->price, 0, ',', '.'); ?>₫</span>
+                                        <?php if (!empty($product->old_price) && $product->old_price > $product->price): ?>
+                                            <span class="old-price"><?php echo number_format($product->old_price, 0, ',', '.'); ?>₫</span>
+                                            <?php 
+                                                $discount_percent = round(($product->old_price - $product->price) / $product->old_price * 100);
+                                            ?>
+                                            <span class="discount-badge">-<?php echo $discount_percent; ?>%</span>
+                                        <?php else: ?>
+                                            <?php 
+                                                $original_price = round($product->price / 0.67);
+                                            ?>
+                                            <span class="old-price"><?php echo number_format($original_price, 0, ',', '.'); ?>₫</span>
+                                            <span class="discount-badge">-33%</span>
                                         <?php endif; ?>
                                     </div>
 
@@ -578,8 +832,10 @@
                     
                     <div class="pagination">
                         <?php if (isset($pagination) && $pagination['total_pages'] > 0): ?>
-                            <a href="<?php echo '?page=' . max(1, $pagination['current_page'] - 1); ?>" 
-                               class="page-item prev <?php echo $pagination['current_page'] <= 1 ? 'disabled' : ''; ?>" 
+
+                            <a href="?page=<?php echo max(1, $pagination['current_page'] - 1); ?>" 
+                               class="page-item prev <?php echo $pagination['current_page'] <= 1 ? 'disabled' : ''; ?>"
+
                                data-page="<?php echo max(1, $pagination['current_page'] - 1); ?>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
@@ -594,10 +850,11 @@
                                 $show_dots = ($i == $pagination['current_page'] - 2 && $i > 1) || 
                                              ($i == $pagination['current_page'] + 2 && $i < $pagination['total_pages']);
                                 
-                                if ($show_page):
-                                ?>
-                                    <a href="<?php echo '?page=' . $i; ?>" 
-                                       class="page-item <?php echo $i == $pagination['current_page'] ? 'active' : ''; ?>" 
+
+                                if ($show_page): ?>
+                                    <a href="?page=<?php echo $i; ?>" 
+                                       class="page-item <?php echo $i == $pagination['current_page'] ? 'active' : ''; ?>"
+
                                        data-page="<?php echo $i; ?>">
                                         <?php echo $i; ?>
                                     </a>
@@ -606,11 +863,21 @@
                                 <?php endif; ?>
                             <?php endfor; ?>
                             
-                            <a href="<?php echo '?page=' . min($pagination['total_pages'], $pagination['current_page'] + 1); ?>" 
-                               class="page-item next <?php echo $pagination['current_page'] >= $pagination['total_pages'] ? 'disabled' : ''; ?>" 
+
+                            <a href="?page=<?php echo min($pagination['total_pages'], $pagination['current_page'] + 1); ?>" 
+                               class="page-item next <?php echo $pagination['current_page'] >= $pagination['total_pages'] ? 'disabled' : ''; ?>"
                                data-page="<?php echo min($pagination['total_pages'], $pagination['current_page'] + 1); ?>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
+                        <?php else: ?>
+                            <a href="#" class="page-item prev disabled">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <a href="#" class="page-item active">1</a>
+                            <a href="#" class="page-item next disabled">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
@@ -664,6 +931,9 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
+                    scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error searching products:', error));
             }
@@ -677,11 +947,13 @@ function handleSearch() {
         
         // Đợi 300ms sau khi người dùng ngừng gõ
         searchTimeout = setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('page', 1); // Reset về trang 1 khi tìm kiếm
+            
             if (keyword.length >= 2) {
-                const urlParams = new URLSearchParams(window.location.search);
+
                 urlParams.set('keyword', keyword);
-                urlParams.set('page', 1); // Reset về trang 1 khi tìm kiếm
-                
+
                 fetch(`/Product/search?${urlParams.toString()}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -691,14 +963,16 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
+                    scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error searching products:', error));
             } else {
                 // Nếu từ khóa quá ngắn, hiển thị tất cả sản phẩm
-                const urlParams = new URLSearchParams(window.location.search);
+
                 urlParams.delete('keyword');
-                urlParams.set('page', 1); // Reset về trang 1
-                
+
                 fetch(`/Product/search?${urlParams.toString()}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -708,6 +982,9 @@ function handleSearch() {
                 .then(data => {
                     updateProductGrid(data.products);
                     updatePagination(data.pagination);
+
+                    scrollToBreadcrumb();
+
                 })
                 .catch(error => console.error('Error fetching products:', error));
             }
@@ -752,13 +1029,11 @@ function handleSort() {
             }
             
             const sortValue = this.getAttribute('data-sort');
-            
-            // Giữ lại các tham số hiện có và thêm tham số sắp xếp mới
             const urlParams = new URLSearchParams(window.location.search);
             urlParams.set('sort', sortValue);
             urlParams.set('page', 1); // Reset về trang 1 khi sắp xếp
             
-            // Gọi API sort với tất cả tham số hiện tại
+
             fetch(`/Product/sort?${urlParams.toString()}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -769,6 +1044,7 @@ function handleSort() {
                 updateProductGrid(data.products);
                 updatePagination(data.pagination);
                 dropdownMenu.classList.remove('show');
+                scrollToBreadcrumb();
             })
             .catch(error => console.error('Error sorting products:', error));
         });
@@ -956,16 +1232,19 @@ function updateProductGrid(products) {
                     <div class="product-rating">
                         <div class="stars">
                             ${Array(5).fill().map((_, i) => 
-                                `<i class="fas fa-star ${i < (product.rating || 0) ? 'active' : ''}"></i>`
+                                `<i class="fas fa-star ${i < parseFloat(product.rating || 0) ? 'active' : ''}"></i>`
                             ).join('')}
                         </div>
                         <span class="rating-count">(${product.rating_count || 0})</span>
                     </div>
                     
                     <div class="product-price">
-                        <span class="current-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</span>
-                        ${product.old_price ? 
-                            `<span class="old-price">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.old_price)}</span>` : ''
+                        <span class="current-price">${new Intl.NumberFormat('vi-VN').format(product.price)}₫</span>
+                        ${product.old_price && product.old_price > product.price ? 
+                            `<span class="old-price">${new Intl.NumberFormat('vi-VN').format(product.old_price)}₫</span>
+                             <span class="discount-badge">-${Math.round((product.old_price - product.price) / product.old_price * 100)}%</span>` :
+                            `<span class="old-price">${new Intl.NumberFormat('vi-VN').format(Math.round(product.price / 0.67))}₫</span>
+                             <span class="discount-badge">-33%</span>`
                         }
                     </div>
                     
@@ -992,12 +1271,124 @@ function updateProductGrid(products) {
     });
 }
 
+function updatePagination(pagination) {
+    const paginationContainer = document.querySelector('.pagination');
+    if (!paginationContainer || !pagination) return;
+    
+    let paginationHTML = '';
+    
+    // Nút Previous
+    paginationHTML += `
+        <a href="#" class="page-item prev ${pagination.current_page <= 1 ? 'disabled' : ''}" 
+           data-page="${Math.max(1, pagination.current_page - 1)}">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    `;
+    
+    // Số trang
+    for (let i = 1; i <= pagination.total_pages; i++) {
+        // Hiển thị trang đầu, trang cuối và các trang xung quanh trang hiện tại
+        const showPage = i === 1 || i === pagination.total_pages || 
+                         Math.abs(i - pagination.current_page) <= 1;
+        
+        // Hiển thị dấu "..." nếu cần
+        const showDots = (i === pagination.current_page - 2 && i > 1) || 
+                         (i === pagination.current_page + 2 && i < pagination.total_pages);
+        
+        if (showPage) {
+            paginationHTML += `
+                <a href="#" class="page-item ${i === pagination.current_page ? 'active' : ''}" 
+                   data-page="${i}">${i}</a>
+            `;
+        } else if (showDots) {
+            paginationHTML += '<span class="page-dots">...</span>';
+        }
+    }
+    
+    // Nút Next
+    paginationHTML += `
+        <a href="#" class="page-item next ${pagination.current_page >= pagination.total_pages ? 'disabled' : ''}" 
+           data-page="${Math.min(pagination.total_pages, pagination.current_page + 1)}">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+    
+    // Thêm event listeners cho các nút phân trang
+    document.querySelectorAll('.pagination .page-item:not(.disabled)').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (this.classList.contains('disabled')) return;
+            
+            const page = parseInt(this.getAttribute('data-page'));
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Giữ lại tất cả tham số hiện tại và chỉ cập nhật trang
+            urlParams.set('page', page);
+            
+            // Cập nhật URL không reload trang
+            window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+            
+            // Lấy các tham số lọc hiện tại
+            const currentFilters = {
+                category: urlParams.get('category'),
+                min_price: urlParams.get('min_price'),
+                max_price: urlParams.get('max_price'),
+                rating: urlParams.get('rating'),
+                keyword: urlParams.get('keyword'),
+                sort: urlParams.get('sort')
+            };
+            
+            // Xác định API endpoint dựa vào lọc hiện tại
+            let endpoint = '/Product/filter';
+            if (currentFilters.keyword) {
+                endpoint = '/Product/search';
+            } else if (currentFilters.sort && !currentFilters.category && !currentFilters.min_price && !currentFilters.max_price && !currentFilters.rating) {
+                endpoint = '/Product/sort';
+            }
+            
+            // Gọi API với tất cả tham số hiện tại
+            fetch(`${endpoint}?${urlParams.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateProductGrid(data.products);
+                updatePagination(data.pagination);
+                
+                // Cập nhật số lượng sản phẩm trong các danh mục
+                if (data.categories) {
+                    data.categories.forEach(category => {
+                        const countElement = document.querySelector(`input[value="${category.id}"]`)
+                            ?.closest('.filter-option')
+                            ?.querySelector('.option-count');
+                        if (countElement) {
+                            countElement.textContent = `(${category.product_count})`;
+                        }
+                    });
+                }
+                
+                // Cuộn đến phần breadcrumb
+                scrollToBreadcrumb();
+            })
+            .catch(error => console.error('Error fetching products:', error));
+        });
+    });
+}
+
 async function applyFilters() {
     const urlParams = new URLSearchParams(window.location.search);
-    const category = document.querySelector('input[name="category"]:checked')?.value;
-    const rating = document.querySelector('input[name="rating"]:checked')?.value;
-    const minPrice = document.getElementById('price-min').value;
-    const maxPrice = document.getElementById('price-max').value;
+
+    const category = document.querySelector('.category-select').value;
+    const rating = document.querySelector('.rating-select').value;
+    
+    // Lấy giá trị min_price và max_price từ URL nếu đã có
+    const minPrice = urlParams.get('min_price');
+    const maxPrice = urlParams.get('max_price');
+
     
     // Giữ lại tham số sort nếu có
     const sort = urlParams.get('sort');
@@ -1008,10 +1399,10 @@ async function applyFilters() {
     }
     
     // Thêm lại các tham số lọc
-    if (category) {
-        if (category !== 'all') {
-            urlParams.set('category', category);
-        }
+
+    if (category && category !== 'all') {
+        urlParams.set('category', category);
+
     }
     
     if (rating) urlParams.set('rating', rating);
@@ -1026,7 +1417,7 @@ async function applyFilters() {
     window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 
     try {
-        // Xác định endpoint: nếu có category hoặc giá hoặc rating, dùng filter
+
         const endpoint = '/Product/filter';
         
         const response = await fetch(`${endpoint}?${urlParams.toString()}`, {
@@ -1040,24 +1431,25 @@ async function applyFilters() {
         
         // Cập nhật số lượng sản phẩm cho mỗi danh mục
         if (data.categories) {
-            data.categories.forEach(category => {
-                const countElement = document.querySelector(`input[value="${category.id}"]`)
-                    ?.closest('.filter-option')
-                    ?.querySelector('.option-count');
-                if (countElement) {
-                    countElement.textContent = `(${category.product_count})`;
-                }
-            });
+
+            // Cập nhật tùy chọn trong dropdown danh mục
+            const categorySelect = document.querySelector('.category-select');
+            if (categorySelect) {
+                const options = categorySelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value !== 'all') {
+                        const categoryData = data.categories.find(cat => cat.id == option.value);
+                        if (categoryData) {
+                            option.textContent = `${categoryData.name} (${categoryData.product_count})`;
+                        }
+                    }
+                });
+            }
         }
         
         // Cuộn đến phần breadcrumb
-        const breadcrumb = document.querySelector('.breadcrumb');
-        if (breadcrumb) {
-            window.scrollTo({
-                top: breadcrumb.offsetTop - 20,
-                behavior: 'smooth'
-            });
-        }
+        scrollToBreadcrumb();
+
     } catch (error) {
         console.error('Error applying filters:', error);
         
@@ -1072,133 +1464,211 @@ async function applyFilters() {
     }
 }
 
-function handleCategoryChange(checkbox) {
-    if (checkbox.checked) {
-        // Bỏ chọn các checkbox danh mục khác
-        document.querySelectorAll('input[name="category"]').forEach(cb => {
-            if (cb !== checkbox) cb.checked = false;
-        });
-        applyFilters();
+
+function handleCategorySelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (selectedValue && selectedValue !== 'all') {
+        urlParams.set('category', selectedValue);
+    } else {
+        urlParams.delete('category');
+
     }
+    
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    
+    applyFilters();
 }
 
-function handleRatingChange(checkbox) {
-    if (checkbox.checked) {
-        // Bỏ chọn các checkbox rating khác
-        document.querySelectorAll('input[name="rating"]').forEach(cb => {
-            if (cb !== checkbox) cb.checked = false;
-        });
-        applyFilters();
+
+function handleRatingSelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (selectedValue) {
+        urlParams.set('rating', selectedValue);
+    } else {
+        urlParams.delete('rating');
+
     }
+    
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    
+    applyFilters();
+}
+
+
+function handlePriceSelectChange(select) {
+    const selectedValue = select.value;
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (selectedValue) {
+        const [minPrice, maxPrice] = selectedValue.split('-');
+        urlParams.set('min_price', minPrice);
+        urlParams.set('max_price', maxPrice);
+    } else {
+        urlParams.delete('min_price');
+        urlParams.delete('max_price');
+    }
+    
+    urlParams.set('page', 1);
+    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+    
+    applyFilters();
 }
 
 function clearAllFilters() {
-    // Reset tất cả checkbox
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    document.querySelector('input[value="all"]').checked = true;
+    // Reset dropdown danh mục về "Tất cả"
+    document.querySelector('.category-select').value = 'all';
+
     
-    // Reset thanh giá
-    const priceMin = document.getElementById('price-min');
-    const priceMax = document.getElementById('price-max');
-    priceMin.value = priceMin.min;
-    priceMax.value = priceMax.max;
+    // Reset dropdown giá về "Tất cả"
+    document.querySelector('.price-select').value = '';
     
-    // Xóa tất cả tham số ngoại trừ trang
-    const urlParams = new URLSearchParams(window.location.search);
-    for (const key of [...urlParams.keys()]) {
-        if (key !== 'page') {
-            urlParams.delete(key);
-        }
-    }
+    // Reset dropdown đánh giá về "Tất cả"
+    document.querySelector('.rating-select').value = '';
     
-    // Reset về trang 1
-    urlParams.set('page', 1);
-    
-    // Cập nhật URL không reload trang
-    window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
-    
-    // Cập nhật hiển thị giá
-    updatePriceRange();
-    
-    // Tải lại tất cả sản phẩm
-    fetch(`/Product/filter?${urlParams.toString()}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        updateProductGrid(data.products);
-        updatePagination(data.pagination);
-        
-        // Cập nhật số lượng sản phẩm cho mỗi danh mục
-        if (data.categories) {
-            data.categories.forEach(category => {
-                const countElement = document.querySelector(`input[value="${category.id}"]`)
-                    ?.closest('.filter-option')
-                    ?.querySelector('.option-count');
-                if (countElement) {
-                    countElement.textContent = `(${category.product_count})`;
-                }
-            });
-        }
-        
-        // Cuộn đến phần breadcrumb
-        const breadcrumb = document.querySelector('.breadcrumb');
-        if (breadcrumb) {
-            window.scrollTo({
-                top: breadcrumb.offsetTop - 20,
-                behavior: 'smooth'
-            });
-        }
-    })
-    .catch(error => console.error('Error resetting filters:', error));
+    // Áp dụng bộ lọc với giá trị mặc định
+    applyFilters();
 }
 
-// Thanh trượt giá
-const priceMin = document.getElementById('price-min');
-const priceMax = document.getElementById('price-max');
-const priceMinValue = document.getElementById('price-min-value');
-const priceMaxValue = document.getElementById('price-max-value');
+// Xử lý chuyển đổi hiển thị lưới/danh sách
+function handleViewToggle() {
+    const gridViewBtn = document.querySelector('.view-toggle .grid-view');
+    const listViewBtn = document.querySelector('.view-toggle .list-view');
+    
+    if (!gridViewBtn || !listViewBtn || !productGrid) return;
 
-function updatePriceRange() {
-    const min = parseInt(priceMin.value);
-    const max = parseInt(priceMax.value);
-    
-    if (min > max) {
-        priceMin.value = max;
-        priceMax.value = min;
+    // Lấy view đã lưu từ localStorage hoặc mặc định là grid
+    const savedView = localStorage.getItem('productView') || 'grid';
+    if (savedView === 'list') {
+        productGrid.classList.add('list-view');
+        gridViewBtn.classList.remove('active');
+        listViewBtn.classList.add('active');
     }
-    
-    priceMinValue.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-        .format(priceMin.value).replace('₫', '') + '₫';
-    priceMaxValue.textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-        .format(priceMax.value).replace('₫', '') + '₫';
-    
-    const rangeSelection = document.querySelector('.range-selection');
-    const percentage1 = ((priceMin.value - priceMin.min) / (priceMin.max - priceMin.min)) * 100;
-    const percentage2 = ((priceMax.value - priceMin.min) / (priceMin.max - priceMin.min)) * 100;
-    rangeSelection.style.left = percentage1 + '%';
-    rangeSelection.style.right = (100 - percentage2) + '%';
-    
-    clearTimeout(timeout);
-    timeout = setTimeout(applyFilters, 500);
+
+    // Xử lý click vào nút grid view
+    gridViewBtn.addEventListener('click', function() {
+        productGrid.classList.remove('list-view');
+        gridViewBtn.classList.add('active');
+        listViewBtn.classList.remove('active');
+        localStorage.setItem('productView', 'grid');
+    });
+
+    // Xử lý click vào nút list view
+    listViewBtn.addEventListener('click', function() {
+        productGrid.classList.add('list-view');
+        gridViewBtn.classList.remove('active');
+        listViewBtn.classList.add('active');
+        localStorage.setItem('productView', 'list');
+    });
 }
 
-// Thêm event listeners cho thanh giá
-if (priceMin) priceMin.addEventListener('input', updatePriceRange);
-if (priceMax) priceMax.addEventListener('input', updatePriceRange);
+// Thêm hàm cập nhật số lượng giỏ hàng
+function updateCartCount(count) {
+    // Cập nhật tất cả các phần tử hiển thị số lượng giỏ hàng
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(element => {
+        if (element) {
+            element.textContent = count;
+            // Hiển thị badge nếu có sản phẩm trong giỏ hàng
+            if (count > 0) {
+                element.style.display = 'inline-block';
+            } else {
+                element.style.display = 'none';
+            }
+        }
+    });
+}
 
-// Khởi tạo thanh giá khi trang tải
-if (priceMin && priceMax) updatePriceRange();
 
-// Gọi các hàm xử lý khi trang được tải
+// Cập nhật hàm handleAddToCart
+function handleAddToCart() {
+    document.addEventListener('click', function(e) {
+        const addToCartBtn = e.target.closest('.btn-add-to-cart');
+        if (!addToCartBtn) return;
+        
+        e.preventDefault();
+        const productId = addToCartBtn.getAttribute('href').split('/').pop();
+        
+        // Thêm hiệu ứng loading
+        addToCartBtn.classList.add('loading');
+        const originalText = addToCartBtn.innerHTML;
+        addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
+        
+        fetch(`/Product/addToCartAjax/${productId}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Cập nhật số lượng trong giỏ hàng
+                updateCartCount(data.cartCount);
+                
+                // Hiển thị thông báo thành công
+                showNotification('success', data.message);
+            } else {
+                throw new Error(data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', error.message);
+        })
+        .finally(() => {
+            // Khôi phục nút sau khi hoàn thành
+            setTimeout(() => {
+                addToCartBtn.classList.remove('loading');
+                addToCartBtn.innerHTML = originalText;
+            }, 500);
+        });
+    });
+}
+
+// Thêm hàm hiển thị thông báo
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Thêm class để hiển thị notification với animation
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // Xóa notification sau 3 giây
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+
+// Khởi tạo khi trang đã tải xong
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded');
-    
-    // Đăng ký event handlers
+
+    // Khởi tạo các chức năng
     handleSearch();
     handleSort();
+    handleViewToggle();
+    handleAddToCart();
+
     
     // Khởi tạo phân trang nếu cần
     const paginationData = <?php echo isset($pagination) ? json_encode($pagination) : 'null'; ?>;
@@ -1206,41 +1676,138 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePagination(paginationData);
     }
 
-    // Xử lý chuyển đổi hiển thị lưới/danh sách
-    function handleViewToggle() {
-        const gridViewBtn = document.querySelector('.view-toggle .grid-view');
-        const listViewBtn = document.querySelector('.view-toggle .list-view');
-        const productGrid = document.querySelector('.product-grid');
-        
-        if (!gridViewBtn || !listViewBtn || !productGrid) return;
-
-        // Lấy view đã lưu từ localStorage hoặc mặc định là grid
-        const savedView = localStorage.getItem('productView') || 'grid';
-        if (savedView === 'list') {
-            productGrid.classList.add('list-view');
-            gridViewBtn.classList.remove('active');
-            listViewBtn.classList.add('active');
+    
+    // Đảm bảo số lượng sản phẩm trong danh mục được hiển thị đúng khi tải trang
+    if (document.querySelector('.category-select').value === 'all') {
+        // Nếu đang ở chế độ "Tất cả", cần lấy số lượng sản phẩm cho mỗi danh mục
+        updateCategoryCounts();
+    }
+    
+    // Thêm CSS cho notification
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -300px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transition: transform 0.3s ease;
         }
 
-        // Xử lý click vào nút grid view
-        gridViewBtn.addEventListener('click', function() {
-            productGrid.classList.remove('list-view');
-            gridViewBtn.classList.add('active');
-            listViewBtn.classList.remove('active');
-            localStorage.setItem('productView', 'grid');
-        });
+        
+        .notification.show {
+            transform: translateX(-320px);
+        }
+        
+        .notification.success {
+            border-left: 4px solid #43a047;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #e53935;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification i {
+            font-size: 1.2rem;
+        }
+        
+        .notification.success i {
+            color: #43a047;
+        }
+        
+        .notification.error i {
+            color: #e53935;
+        }
+    `;
+    document.head.appendChild(style);
 
-        // Xử lý click vào nút list view
-        listViewBtn.addEventListener('click', function() {
-            productGrid.classList.add('list-view');
-            gridViewBtn.classList.remove('active');
-            listViewBtn.classList.add('active');
-            localStorage.setItem('productView', 'list');
+    // Thêm CSS cho loading state
+    const loadingStyle = document.createElement('style');
+    loadingStyle.textContent = `
+        .btn-add-to-cart.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .btn-add-to-cart.loading .fa-spinner {
+            margin-right: 5px;
+        }
+    `;
+    document.head.appendChild(loadingStyle);
+
+    // Thêm CSS cho cart count
+    const cartCountStyle = document.createElement('style');
+    cartCountStyle.textContent = `
+        .cart-count {
+            display: inline-block;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #ff4757;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .cart-count:empty {
+            display: none;
+        }
+    `;
+    document.head.appendChild(cartCountStyle);
+});
+
+// Hàm cập nhật số lượng sản phẩm cho mỗi danh mục
+async function updateCategoryCounts() {
+    try {
+        const response = await fetch('/Product/getCategoryCounts', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await response.json();
+        
+        if (data.categories) {
+            // Cập nhật tùy chọn trong dropdown danh mục
+            const categorySelect = document.querySelector('.category-select');
+            if (categorySelect) {
+                const options = categorySelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value !== 'all') {
+                        const categoryData = data.categories.find(cat => cat.id == option.value);
+                        if (categoryData) {
+                            option.textContent = `${categoryData.name} (${categoryData.product_count})`;
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching category counts:', error);
+    }
+}
+
+// Hàm cuộn trang đến phần breadcrumb
+function scrollToBreadcrumb() {
+    const breadcrumb = document.querySelector('.breadcrumb');
+    if (breadcrumb) {
+        window.scrollTo({
+            top: breadcrumb.offsetTop - 20,
+            behavior: 'smooth'
         });
     }
-
-    // Khởi tạo các chức năng
-    handleViewToggle();
-});
+}
 </script>
 <?php include 'app/views/shares/footer.php'; ?>
