@@ -317,5 +317,60 @@ public function getTotalProducts()
     $result = $stmt->fetch(PDO::FETCH_OBJ);
     return $result->count;
 }
+
+public function getProductReviews($productId) {
+    $sql = "SELECT r.*, u.name as user_name 
+            FROM reviews r 
+            JOIN users u ON r.user_id = u.id 
+            WHERE r.product_id = :product_id 
+            ORDER BY r.created_at DESC";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function getRelatedProducts($productId, $categoryId, $limit = 4) {
+    $sql = "SELECT * FROM product 
+            WHERE category_id = :category_id 
+            AND id != :product_id 
+            ORDER BY RAND() 
+            LIMIT :limit";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':category_id', $categoryId);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_OBJ);
+}
+
+public function updateProductRating($productId) {
+    // Tính toán rating trung bình
+    $sql = "SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count 
+            FROM reviews 
+            WHERE product_id = :product_id";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':product_id', $productId);
+    $stmt->execute();
+    
+    $result = $stmt->fetch(PDO::FETCH_OBJ);
+    
+    // Cập nhật rating của sản phẩm
+    $sql = "UPDATE product 
+            SET rating = :rating, rating_count = :rating_count 
+            WHERE id = :product_id";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(':rating', $result->avg_rating);
+    $stmt->bindParam(':rating_count', $result->rating_count);
+    $stmt->bindParam(':product_id', $productId);
+    
+    return $stmt->execute();
+}
 } 
 ?>

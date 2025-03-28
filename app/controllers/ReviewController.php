@@ -1,16 +1,16 @@
 <?php
-require_once 'app/models/ReviewModel.php';
-require_once 'app/helpers/SessionHelper.php';
-require_once 'app/config/database.php';
+require_once('app/config/database.php');
+require_once('app/models/ReviewModel.php');
+require_once('app/helpers/SessionHelper.php');
+require_once('app/controllers/Controller.php');
 
-class ReviewController
+class ReviewController extends Controller
 {
     private $reviewModel;
-    private $db;
     
     public function __construct()
     {
-        $this->db = (new Database())->getConnection();
+        parent::__construct();
         $this->reviewModel = new ReviewModel($this->db);
     }
     

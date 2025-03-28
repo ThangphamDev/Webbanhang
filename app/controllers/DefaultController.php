@@ -1,7 +1,14 @@
 <?php
-class DefaultController
+require_once('app/controllers/Controller.php');
+
+class DefaultController extends Controller
 {
-public function index(){
-echo "HELLO HUTECH ";
-}
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    public function index(){
+        echo "HELLO HUTECH ";
+    }
 }

@@ -2,16 +2,19 @@
 require_once('app/config/database.php');
 require_once('app/models/ProductModel.php');
 require_once('app/models/CategoryModel.php');
+require_once('app/models/InventoryModel.php');
+require_once('app/controllers/Controller.php');
 
-class ProductController 
+class ProductController extends Controller 
 {
     private $productModel;
-    private $db;
+    private $inventoryModel;
 
     public function __construct() 
     {
-        $this->db = (new Database())->getConnection();
+        parent::__construct();
         $this->productModel = new ProductModel($this->db);
+        $this->inventoryModel = new InventoryModel($this->db);
     }
 
     
@@ -224,29 +227,55 @@ class ProductController
 
     public function addToCart($id) 
     {
-        $product = $this->productModel->getProductById($id);
-        if (!$product) {
-            echo "Không tìm thấy sản phẩm.";
-            return;
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+            
+            // Kiểm tra số lượng tồn kho
+            if (!$this->inventoryModel->checkStock($id, $quantity)) {
+                if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Sản phẩm không đủ số lượng trong kho'
+                    ]);
+                    exit;
+                }
+                $_SESSION['error'] = 'Sản phẩm không đủ số lượng trong kho';
+                header('Location: /Product/show/' . $id);
+                exit;
+            }
+            
+            // Thêm vào giỏ hàng
+            if (!isset($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
+            
+            if (isset($_SESSION['cart'][$id])) {
+                $_SESSION['cart'][$id] += $quantity;
+            } else {
+                $_SESSION['cart'][$id] = $quantity;
+            }
+            
+            // Cập nhật số lượng tồn kho
+            $inventory = $this->inventoryModel->getProductInventory($id);
+            $this->inventoryModel->updateQuantity($id, $inventory->quantity - $quantity);
+            
+            if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Đã thêm sản phẩm vào giỏ hàng'
+                ]);
+                exit;
+            }
+            
+            $_SESSION['success'] = 'Đã thêm sản phẩm vào giỏ hàng';
+            header('Location: /Product/show/' . $id);
+            exit;
         }
-
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
-
-        if (isset($_SESSION['cart'][$id])) {
-            $_SESSION['cart'][$id]['quantity'] += 1;
-        } else {
-            $_SESSION['cart'][$id] = [
-                'name' => $product->name,
-                'price' => $product->price,
-                'quantity' => 1,
-                'image' => $product->image,
-                'category_id' => $product->category_id
-            ];
-        }
-
-        header('Location: /Product');
+        
+        header('Location: /Product/show/' . $id);
+        exit;
     }
 
     public function cart() 
@@ -330,22 +359,50 @@ class ProductController
  
     public function show($id) 
     {
-        $product = $this->productModel->getProductById($id);
+        $productModel = $this->productModel;
+        $inventoryModel = $this->inventoryModel;
+        
+        $product = $productModel->getProductById($id);
         if (!$product) {
-            header('Location: /Product');
+            header('Location: /');
             exit;
         }
         
-        // Lấy ảnh sản phẩm bổ sung nếu có
-        $product_images = $this->getProductImages($id);
+        $inventory = $inventoryModel->getProductInventory($id);
         
-        // Lấy đánh giá của sản phẩm
-        $reviews = $this->getProductReviews($id);
+        // Lấy sản phẩm liên quan từ cùng danh mục
+        $query = "SELECT p.*, c.name as category_name, 
+                        (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as rating_count,
+                        (SELECT AVG(rating) FROM reviews r WHERE r.product_id = p.id) as rating
+                 FROM product p 
+                 LEFT JOIN category c ON p.category_id = c.id 
+                 WHERE p.category_id = :category_id 
+                 AND p.id != :product_id 
+                 ORDER BY RAND() 
+                 LIMIT 4";
+                 
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':category_id', $product->category_id);
+        $stmt->bindParam(':product_id', $id);
+        $stmt->execute();
         
-        // Lấy sản phẩm liên quan
-        $related_products = $this->getRelatedProducts($id, $product->category_id);
+        $related_products = $stmt->fetchAll(PDO::FETCH_OBJ);
         
-        include 'app/views/product/show.php';
+        // Xử lý rating cho mỗi sản phẩm liên quan
+        foreach ($related_products as $related) {
+            $related->rating = round($related->rating ?? 0, 1);
+            $related->rating_count = (int)$related->rating_count;
+        }
+        
+        $data = [
+            'product' => $product,
+            'inventory' => $inventory,
+            'reviews' => $productModel->getProductReviews($id),
+            'related_products' => $related_products,
+            'product_images' => $this->getProductImages($id)
+        ];
+        
+        $this->view('product/show', $data);
     }
     
     private function getProductReviews($product_id)
@@ -376,18 +433,37 @@ class ProductController
     
     private function getRelatedProducts($product_id, $category_id, $limit = 4)
     {
-        $query = "SELECT p.*, c.name as category_name 
-                 FROM product p 
-                 LEFT JOIN category c ON p.category_id = c.id 
-                 WHERE p.category_id = :category_id AND p.id != :product_id 
-                 ORDER BY RAND() 
-                 LIMIT :limit";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':category_id', $category_id);
-        $stmt->bindParam(':product_id', $product_id);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        try {
+            $query = "SELECT p.*, c.name as category_name, 
+                            (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as rating_count,
+                            (SELECT AVG(rating) FROM reviews r WHERE r.product_id = p.id) as rating
+                     FROM product p 
+                     LEFT JOIN category c ON p.category_id = c.id 
+                     WHERE p.category_id = :category_id 
+                     AND p.id != :product_id 
+                     AND p.status = 1
+                     ORDER BY RAND() 
+                     LIMIT :limit";
+                     
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':category_id', $category_id);
+            $stmt->bindParam(':product_id', $product_id);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $related_products = $stmt->fetchAll(PDO::FETCH_OBJ);
+            
+            // Xử lý rating cho mỗi sản phẩm
+            foreach ($related_products as $product) {
+                $product->rating = round($product->rating ?? 0, 1);
+                $product->rating_count = (int)$product->rating_count;
+            }
+            
+            return $related_products;
+        } catch (PDOException $e) {
+            error_log('Lỗi khi lấy sản phẩm liên quan: ' . $e->getMessage());
+            return [];
+        }
     }
  
     public function add() {
@@ -518,8 +594,20 @@ class ProductController
         
         // Nếu giỏ hàng trống, chuyển hướng về trang giỏ hàng
         if (empty($cart)) {
+            $_SESSION['error'] = "Giỏ hàng trống.";
             header('Location: /Product/cart');
             exit;
+        }
+        
+        // Kiểm tra số lượng tồn kho
+        $inventoryModel = new InventoryModel($this->db);
+        foreach ($cart as $product_id => $item) {
+            $inventory = $inventoryModel->getProductInventory($product_id);
+            if (!$inventory || $inventory->quantity < $item['quantity']) {
+                $_SESSION['error'] = "Sản phẩm '" . $item['name'] . "' không đủ số lượng trong kho.";
+                header('Location: /Product/cart');
+                exit;
+            }
         }
         
         // Truyền biến vào view
@@ -534,15 +622,30 @@ class ProductController
             $address = $_POST['address']; 
             $note = isset($_POST['note']) ? $_POST['note'] : '';
             $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : 'cod';
- 
+
             if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) { 
-                echo "Giỏ hàng trống."; 
-                return; 
+                $_SESSION['error'] = "Giỏ hàng trống.";
+                header('Location: /Product/cart');
+                exit;
             } 
- 
+
+            // Kiểm tra số lượng tồn kho trước khi xử lý đơn hàng
+            $inventoryModel = new InventoryModel($this->db);
+            $cart = $_SESSION['cart'];
+            
+            foreach ($cart as $product_id => $item) {
+                $inventory = $inventoryModel->getProductInventory($product_id);
+                if (!$inventory || $inventory->quantity < $item['quantity']) {
+                    $_SESSION['error'] = "Sản phẩm '" . $item['name'] . "' không đủ số lượng trong kho.";
+                    header('Location: /Product/cart');
+                    exit;
+                }
+            }
+
             $this->db->beginTransaction(); 
- 
+
             try { 
+                // Tạo đơn hàng mới
                 $query = "INSERT INTO orders (name, phone, address, note, payment_method) VALUES (:name, :phone, :address, :note, :payment_method)"; 
                 $stmt = $this->db->prepare($query); 
                 $stmt->bindParam(':name', $name); 
@@ -552,9 +655,10 @@ class ProductController
                 $stmt->bindParam(':payment_method', $payment_method);
                 $stmt->execute(); 
                 $order_id = $this->db->lastInsertId(); 
- 
-                $cart = $_SESSION['cart']; 
+
+                // Thêm chi tiết đơn hàng và cập nhật số lượng tồn kho
                 foreach ($cart as $product_id => $item) { 
+                    // Thêm chi tiết đơn hàng
                     $query = "INSERT INTO order_details (order_id, product_id, quantity, price) VALUES (:order_id, :product_id, :quantity, :price)"; 
                     $stmt = $this->db->prepare($query); 
                     $stmt->bindParam(':order_id', $order_id); 
@@ -562,14 +666,24 @@ class ProductController
                     $stmt->bindParam(':quantity', $item['quantity']); 
                     $stmt->bindParam(':price', $item['price']); 
                     $stmt->execute(); 
+
+                    // Cập nhật số lượng tồn kho
+                    $inventory = $inventoryModel->getProductInventory($product_id);
+                    $newQuantity = $inventory->quantity - $item['quantity'];
+                    $inventoryModel->updateQuantity($product_id, $newQuantity);
                 } 
- 
+
                 unset($_SESSION['cart']); 
                 $this->db->commit(); 
+                
+                $_SESSION['success'] = "Đặt hàng thành công!";
                 header('Location: /Product/orderConfirmation'); 
+                exit;
             } catch (Exception $e) { 
                 $this->db->rollBack(); 
-                echo "Đã xảy ra lỗi khi xử lý đơn hàng: " . $e->getMessage(); 
+                $_SESSION['error'] = "Đã xảy ra lỗi khi xử lý đơn hàng: " . $e->getMessage();
+                header('Location: /Product/cart');
+                exit;
             } 
         } 
     } 

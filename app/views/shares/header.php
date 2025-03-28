@@ -234,6 +234,32 @@
             margin-right: 6px;
         }
 
+        /* Admin Dropdown Link - nền trắng, chữ xanh */
+        .admin-dropdown-link {
+            color: var(--primary-dark) !important;
+            background-color: var(--white);
+            padding: 5px 10px !important;
+            border-radius: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
+
+        .admin-dropdown-link:hover, 
+        .admin-dropdown-link:focus {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: var(--primary-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .admin-dropdown-link i {
+            font-size: 1rem;
+            margin-right: 6px;
+        }
+
         .login-button {
             background-color: var(--white);
             color: var(--primary-dark) !important;
@@ -380,6 +406,27 @@
                 left: 10px !important;
             }
         }
+
+        /* Dropdown Menu 11 */
+        .dropdown-menu-11 {
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            padding: 10px 0;
+            margin-top: 8px;
+            background-color: #ffffff;
+            animation: slideDown 0.2s ease;
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            min-width: 220px;
+            z-index: 1000;
+        }
+
+        .dropdown-menu-11.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -407,28 +454,14 @@
                             Danh sách sản phẩm
                         </a>
                     </li>
+                    <?php if (!SessionHelper::isAdmin()): ?>
                     <li class="nav-item">
                         <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Review') === 0) ? 'active' : ''; ?>" href="/Review">
                             <i class="fas fa-star"></i>
                             Đánh giá từ khách hàng
                         </a>
                     </li>
-                    <li class="nav-item">
-                    <?php if (SessionHelper::isAdmin()): ?>
-                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
-                            <i class="fas fa-plus-circle"></i>
-                            Thêm sản phẩm
-                        </a>
-                        <?php endif; ?>
-                    </li>
-                    <li class="nav-item">
-                    <?php if (SessionHelper::isAdmin()): ?>
-                        <a class="nav-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Category') === 0) ? 'active' : ''; ?>" href="/Category">
-                            <i class="fas fa-tags"></i>
-                            Danh mục
-                        </a>
                     <?php endif; ?>
-                    </li>
                 </ul>
 
                 <!-- Search Box -->
@@ -441,6 +474,25 @@
 
                 <!-- Right Side (Cart and User) -->
                 <ul class="navbar-nav ml-auto">
+                    <?php if (SessionHelper::isAdmin()): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle admin-dropdown-link" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-cog"></i>
+                            Quản lý
+                        </a>
+                        <div class="dropdown-menu-11" aria-labelledby="adminDropdown">
+                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/add') === 0) ? 'active' : ''; ?>" href="/Product/add">
+                                <i class="fas fa-plus-circle"></i> Thêm sản phẩm
+                            </a>
+                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Category') === 0) ? 'active' : ''; ?>" href="/Category">
+                                <i class="fas fa-tags"></i> Danh mục
+                            </a>
+                            <a class="dropdown-item <?php echo (strpos($_SERVER['REQUEST_URI'], '/Review') === 0) ? 'active' : ''; ?>" href="/Review">
+                                <i class="fas fa-star"></i> Đánh giá từ khách hàng
+                            </a>
+                        </div>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link cart-link <?php echo (strpos($_SERVER['REQUEST_URI'], '/Product/cart') === 0) ? 'active' : ''; ?>" href="/Product/cart">
                             <i class="fas fa-shopping-cart"></i>
@@ -504,8 +556,50 @@
             }
         });
 
-        // Xử lý cuộn trang khi click vào nút danh sách sản phẩm
+        // Xử lý dropdown admin
         document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý dropdown admin
+            const adminDropdown = document.getElementById('adminDropdown');
+            if (adminDropdown) {
+                adminDropdown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const dropdownMenu = this.nextElementSibling;
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                // Đóng dropdown khi click ra ngoài
+                document.addEventListener('click', function(e) {
+                    if (!adminDropdown.contains(e.target)) {
+                        const dropdownMenu = adminDropdown.nextElementSibling;
+                        if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+                            dropdownMenu.classList.remove('show');
+                        }
+                    }
+                });
+            }
+            
+            // Xử lý dropdown user
+            const userDropdown = document.getElementById('userDropdown');
+            if (userDropdown) {
+                userDropdown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdownMenu = this.nextElementSibling;
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                // Đóng dropdown khi click ra ngoài
+                document.addEventListener('click', function(e) {
+                    if (!userDropdown.contains(e.target)) {
+                        const dropdownMenu = userDropdown.nextElementSibling;
+                        if (dropdownMenu && dropdownMenu.classList.contains('show')) {
+                            dropdownMenu.classList.remove('show');
+                        }
+                    }
+                });
+            }
+            
+            // Xử lý cuộn trang khi click vào nút danh sách sản phẩm
             const productsListLink = document.getElementById('products-list-link');
             if (productsListLink && window.location.pathname === '/Product/') {
                 productsListLink.addEventListener('click', function(e) {

@@ -94,8 +94,25 @@
                     <?php endif; ?>
                 </div>
                 
-                <div class="product-status in-stock">
-                    <i class="fas fa-check-circle"></i> Còn hàng
+                <div class="product-stock">
+                    <?php if (isset($inventory)): ?>
+                        <?php if ($inventory->quantity == 0): ?>
+                            <span class="stock-status out-of-stock">
+                                <i class="fas fa-times-circle"></i>
+                                Hết hàng
+                            </span>
+                        <?php elseif ($inventory->quantity <= $inventory->min_quantity): ?>
+                            <span class="stock-status low-stock">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Sắp hết hàng (Còn <?php echo $inventory->quantity; ?> sản phẩm)
+                            </span>
+                        <?php else: ?>
+                            <span class="stock-status in-stock">
+                                <i class="fas fa-check-circle"></i>
+                                Còn hàng (<?php echo $inventory->quantity; ?> sản phẩm)
+                            </span>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
             
@@ -106,21 +123,24 @@
             <?php endif; ?>
             
             <div class="product-actions">
-                <div class="quantity-selector">
-                    <button type="button" class="qty-btn minus">
-                        <i class="fas fa-minus"></i>
+                <?php if (isset($inventory) && $inventory->quantity > 0): ?>
+                    <form action="/Product/addToCart/<?php echo $product->id; ?>" method="POST" class="add-to-cart-form">
+                        <div class="quantity-selector">
+                            <button type="button" class="quantity-btn minus">-</button>
+                            <input type="number" name="quantity" value="1" min="1" max="<?php echo $inventory->quantity; ?>" class="quantity-input">
+                            <button type="button" class="quantity-btn plus">+</button>
+                        </div>
+                        <button type="submit" class="btn-add-to-cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            Thêm vào giỏ hàng
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <button class="btn-out-of-stock" disabled>
+                        <i class="fas fa-ban"></i>
+                        Hết hàng
                     </button>
-                    <input type="number" name="quantity" id="quantity" value="1" min="1" 
-                           max="<?php echo isset($product->quantity) ? $product->quantity : 99; ?>">
-                    <button type="button" class="qty-btn plus">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-                
-                <button class="btn-add-to-cart" id="add-to-cart" data-product-id="<?php echo $product->id; ?>">
-                    <i class="fas fa-shopping-cart"></i>
-                    Thêm vào giỏ hàng
-                </button>
+                <?php endif; ?>
                 
                 <button class="btn-buy-now">
                     <i class="fas fa-bolt"></i>
@@ -352,94 +372,481 @@
     </div>
     
     <!-- Sản phẩm liên quan -->
-    <?php if (!empty($related_products)): ?>
     <div class="related-products">
-        <h3 class="section-title">Sản phẩm liên quan</h3>
-        
-        <div class="product-grid related">
-            <?php foreach ($related_products as $rproduct): ?>
-                <div class="product-card">
-                    <div class="product-badges">
-                        <?php if (!empty($rproduct->old_price) && $rproduct->old_price > $rproduct->price): ?>
-                            <?php $discount_percent = round(($rproduct->old_price - $rproduct->price) / $rproduct->old_price * 100); ?>
-                            <span class="badge badge-sale">-<?php echo $discount_percent; ?>%</span>
-                        <?php endif; ?>
-                        
-                        <?php if ((time() - strtotime($rproduct->created_at ?? '')) / 86400 < 7): ?>
-                            <span class="badge badge-new">New</span>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <div class="product-actions-quick">
-                        <button class="action-btn btn-wishlist" title="Thêm vào yêu thích">
-                            <i class="far fa-heart"></i>
-                        </button>
-                        <button class="action-btn btn-compare" title="So sánh">
-                            <i class="fas fa-exchange-alt"></i>
-                        </button>
-                        <button class="action-btn btn-quickview" title="Xem nhanh">
-                            <i class="far fa-eye"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="product-thumb">
-                        <a href="/Product/show/<?php echo $rproduct->id; ?>" class="image-wrapper">
-                            <?php if (!empty($rproduct->image)): ?>
-                                <img src="/<?php echo htmlspecialchars($rproduct->image); ?>" 
-                                     alt="<?php echo htmlspecialchars($rproduct->name); ?>" 
-                                     class="product-img">
-                            <?php else: ?>
-                                <div class="no-image">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            <?php endif; ?>
-                        </a>
-                        
-                        <div class="hover-action">
-                            <a href="/Product/addToCart/<?php echo $rproduct->id; ?>" class="btn-add-to-cart">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Thêm vào giỏ</span>
+        <h2 class="section-title">Sản phẩm liên quan</h2>
+        <div class="products-grid">
+            <?php if (!empty($related_products)): ?>
+                <?php foreach ($related_products as $related): ?>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <a href="/Product/show/<?php echo $related->id; ?>">
+                                <img src="/<?php echo htmlspecialchars($related->image); ?>" 
+                                     alt="<?php echo htmlspecialchars($related->name); ?>">
                             </a>
                         </div>
-                    </div>
-                    
-                    <div class="product-info">
-                        <?php if (!empty($rproduct->category_name)): ?>
-                            <div class="product-category">
-                                <a href="/category/<?php echo strtolower($rproduct->category_name); ?>">
-                                    <?php echo htmlspecialchars($rproduct->category_name); ?>
+                        <div class="product-info">
+                            <h3 class="product-name">
+                                <a href="/Product/show/<?php echo $related->id; ?>">
+                                    <?php echo htmlspecialchars($related->name); ?>
+                                </a>
+                            </h3>
+                            <div class="product-price">
+                                <?php echo number_format($related->price, 0, ',', '.'); ?>₫
+                            </div>
+                            <div class="product-rating">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i class="fas fa-star<?php echo $i <= $related->rating ? ' active' : ''; ?>"></i>
+                                <?php endfor; ?>
+                                <span class="rating-count">(<?php echo $related->rating_count; ?>)</span>
+                            </div>
+                            <div class="product-actions">
+                                <button class="btn-add-to-cart" onclick="addToCart(<?php echo $related->id; ?>)">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </button>
+                                <a href="/Product/show/<?php echo $related->id; ?>" class="btn-view-detail">
+                                    <i class="fas fa-eye"></i>
                                 </a>
                             </div>
-                        <?php endif; ?>
-                        
-                        <h3 class="product-name">
-                            <a href="/Product/show/<?php echo $rproduct->id; ?>">
-                                <?php echo htmlspecialchars($rproduct->name); ?>
-                            </a>
-                        </h3>
-                        
-                        <div class="product-rating">
-                            <div class="stars">
-                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <i class="fas fa-star <?php echo $i <= ($rproduct->rating ?? 0) ? 'active' : ''; ?>"></i>
-                                <?php endfor; ?>
-                            </div>
-                            <span class="rating-count">(<?php echo $rproduct->rating_count ?? 0; ?>)</span>
-                        </div>
-                        
-                        <div class="product-price">
-                            <span class="current-price"><?php echo number_format($rproduct->price, 0, ',', '.'); ?>₫</span>
-                            <?php if (!empty($rproduct->old_price) && $rproduct->old_price > $rproduct->price): ?>
-                                <span class="old-price"><?php echo number_format($rproduct->old_price, 0, ',', '.'); ?>₫</span>
-                            <?php endif; ?>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="no-products">Không có sản phẩm liên quan.</p>
+            <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
 </div>
+
+<style>
+.product-stock {
+    margin: 1rem 0;
+}
+
+.stock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.stock-status i {
+    font-size: 1.1rem;
+}
+
+.stock-status.in-stock {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.stock-status.low-stock {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.stock-status.out-of-stock {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.product-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    width: fit-content;
+}
+
+.quantity-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f5f5f5;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.quantity-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.quantity-input {
+    width: 50px;
+    height: 32px;
+    border: none;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.add-to-cart-form {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.btn-add-to-cart {
+    flex: 1;
+    height: 42px;
+    padding: 0 1.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-add-to-cart:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-buy-now {
+    height: 42px;
+    padding: 0 2rem;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-buy-now:hover {
+    background: #ff3344;
+    transform: translateY(-1px);
+}
+
+.btn-buy-now i {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .product-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .add-to-cart-form {
+        width: 100%;
+    }
+
+    .btn-buy-now {
+        width: 100%;
+    }
+}
+
+/* Style cho sao đánh giá */
+.stars .fa-star {
+    color: #ddd;
+    font-size: 1rem;
+}
+
+.stars .fa-star.active {
+    color: #ffc107;
+}
+
+.rating-average .stars {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+}
+
+.rating-average .fa-star {
+    font-size: 1.2rem;
+}
+
+.review-rating .fa-star {
+    color: #ddd;
+    font-size: 1rem;
+}
+
+.review-rating .fa-star.active {
+    color: #ffc107;
+}
+
+.rating-selector .rating-stars {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.25rem;
+}
+
+.rating-selector .rating-stars input {
+    display: none;
+}
+
+.rating-selector .rating-stars label {
+    cursor: pointer;
+    color: #ddd;
+    font-size: 1.5rem;
+}
+
+.rating-selector .rating-stars label:hover,
+.rating-selector .rating-stars label:hover ~ label,
+.rating-selector .rating-stars input:checked ~ label {
+    color: #ffc107;
+}
+
+.rating-bars .rating-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.rating-bars .rating-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 3rem;
+}
+
+.rating-bars .rating-label .fa-star {
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+.rating-bars .rating-bar {
+    flex: 1;
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rating-bars .rating-fill {
+    height: 100%;
+    background: #ffc107;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.rating-bars .rating-count {
+    min-width: 2rem;
+    text-align: right;
+    color: #666;
+}
+
+.review-summary {
+    display: flex;
+    gap: 2rem;
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.rating-average {
+    text-align: center;
+}
+
+.rating-average .average-number {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--text-dark);
+    line-height: 1;
+}
+
+.rating-average .total-ratings {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .review-summary {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+.related-products {
+    margin-top: 3rem;
+    padding: 2rem 0;
+    background: #f8f9fa;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: var(--text-dark);
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 0 1rem;
+}
+
+.product-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-image {
+    position: relative;
+    padding-top: 100%;
+    overflow: hidden;
+}
+
+.product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 1rem;
+}
+
+.product-name {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    line-height: 1.4;
+}
+
+.product-name a {
+    color: var(--text-dark);
+    text-decoration: none;
+}
+
+.product-name a:hover {
+    color: var(--primary-color);
+}
+
+.product-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.product-rating .fa-star {
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.product-rating .fa-star.active {
+    color: #ffc107;
+}
+
+.rating-count {
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-add-to-cart,
+.btn-view-detail {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.btn-add-to-cart {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-view-detail {
+    background: #e9ecef;
+    color: var(--text-dark);
+}
+
+.btn-add-to-cart:hover {
+    background: var(--primary-dark);
+}
+
+.btn-view-detail:hover {
+    background: #dee2e6;
+}
+
+.no-products {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #666;
+    padding: 2rem;
+}
+
+@media (max-width: 768px) {
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+</style>
 
 <script src="/public/js/show.js"></script>
 <script>
@@ -457,63 +864,6 @@ document.addEventListener('DOMContentLoaded', function() {
             thumbnails.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
         });
-    });
-    
-    // Xử lý tăng giảm số lượng
-    const quantityInput = document.getElementById('quantity');
-    const minusBtn = document.querySelector('.qty-btn.minus');
-    const plusBtn = document.querySelector('.qty-btn.plus');
-    const maxQuantity = parseInt(quantityInput.getAttribute('max')) || 99;
-    
-    minusBtn.addEventListener('click', function(e) {
-        e.preventDefault(); // Ngăn hành vi mặc định của button
-        let value = parseInt(quantityInput.value);
-        if (isNaN(value) || value <= 1) {
-            quantityInput.value = 1;
-        } else {
-            quantityInput.value = value - 1;
-        }
-        // Kích hoạt sự kiện change để đảm bảo giá trị mới được lưu
-        quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    
-    plusBtn.addEventListener('click', function(e) {
-        e.preventDefault(); // Ngăn hành vi mặc định của button
-        let value = parseInt(quantityInput.value);
-        if (isNaN(value)) {
-            quantityInput.value = 1;
-        } else if (value < maxQuantity) {
-            quantityInput.value = value + 1;
-        } else {
-            quantityInput.value = maxQuantity;
-        }
-        // Kích hoạt sự kiện change để đảm bảo giá trị mới được lưu
-        quantityInput.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    
-    // Xử lý khi người dùng nhập trực tiếp vào input
-    quantityInput.addEventListener('change', function() {
-        let value = parseInt(this.value);
-        if (isNaN(value) || value < 1) {
-            this.value = 1;
-        } else if (value > maxQuantity) {
-            this.value = maxQuantity;
-        }
-        // Đảm bảo giá trị là số nguyên
-        this.value = parseInt(this.value);
-    });
-    
-    // Ngăn chặn hành vi mặc định cho input số lượng khi nhấn phím up/down
-    quantityInput.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            const step = e.key === 'ArrowUp' ? 1 : -1;
-            const newValue = parseInt(this.value) + step;
-            if (newValue >= 1 && newValue <= maxQuantity) {
-                this.value = newValue;
-                this.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        }
     });
     
     // Xử lý chuyển tab
@@ -801,6 +1151,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Kiểm tra số lượng tồn kho khi thêm vào giỏ
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const productId = this.getAttribute('action').split('/').pop();
+            const quantity = this.querySelector('.quantity-input').value;
+            
+            fetch('/inventory/checkStock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `product_id=${productId}&quantity=${quantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.submit();
+                } else {
+                    alert(data.message);
+                }
+            });
+        });
+    });
+    
     // Debug helper - Giúp theo dõi lỗi trong console
     function logDebugInfo(title, data) {
         console.group('DEBUG: ' + title);
@@ -808,6 +1184,34 @@ document.addEventListener('DOMContentLoaded', function() {
         console.groupEnd();
     }
 });
+
+function addToCart(productId) {
+    fetch(`/Product/addToCartAjax/${productId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cập nhật số lượng giỏ hàng trên header
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                cartCount.textContent = data.cartCount;
+            }
+            
+            // Hiển thị thông báo thành công
+            alert('Đã thêm sản phẩm vào giỏ hàng');
+        } else {
+            alert(data.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+    });
+}
 </script>
 
 <?php include 'app/views/shares/footer.php'; ?>
