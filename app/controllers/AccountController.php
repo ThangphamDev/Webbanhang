@@ -1,20 +1,17 @@
 <?php
 require_once 'app/config/database.php';
 require_once 'app/models/AccountModel.php';
-require_once 'app/models/UserModel.php';
 require_once 'app/helpers/SessionHelper.php';
 require_once 'app/controllers/Controller.php';
 
 class AccountController extends Controller {
     private $accountModel;
-    private $userModel;
-    private $db;
+    protected $db;
 
     public function __construct() {
         parent::__construct();
         $this->db = (new Database())->getConnection();
         $this->accountModel = new AccountModel($this->db);
-        $this->userModel = new UserModel($this->db);
     }
 
     public function register() {
