@@ -7,7 +7,7 @@ require_once 'app/controllers/Controller.php';
 
 class CategoryController extends Controller {
     private $categoryModel;
-    private $db;
+    protected $db;
 
     public function __construct() {
         parent::__construct();
